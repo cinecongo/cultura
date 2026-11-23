@@ -1,0 +1,62 @@
+# Dépendances
+node_modules/
+.pnp
+.pnp.js
+
+# Builds
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.nyc_output/
+
+# Environnement — jamais de valeurs réelles dans Git
+.env
+.env.*
+!.env.example
+*.local
+
+# Outils
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+*.log
+
+# Vercel / Supabase
+.vercel/
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+
+# Android / Capacitor (P9)
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/key.properties
+*.jks
+*.keystore
+google-services.json
+google-services.json.bak
+firebase-debug.log
+
+# Secrets et journaux locaux
+secrets/
+*.pem
+*.p12
+*.pfx
+
+# Agent local (réglages personnels)
+.claude/settings.local.json
