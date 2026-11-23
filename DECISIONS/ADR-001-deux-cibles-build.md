@@ -1,6 +1,6 @@
 # ADR-001 — Deux cibles de build pour un seul code Next.js + Capacitor
 
-- **Statut :** Proposé — validation humaine requise (Gate G0)
+- **Statut :** Accepté — validé en Gate G0 le 2026-11-23
 - **Date :** 2026-11-23
 - **Décideurs :** architecte + porteur de projet
 - **Concerne :** P0.2, P1.3, P6.6, P9

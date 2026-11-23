@@ -1,10 +1,10 @@
 # DESIGN.md — Système de design Cultura
 
-- **Version :** 0.1 (proposition P0.3)
-- **Statut :** **à valider par l'humain avant tout composant** (Gate G0)
+- **Version :** 0.2 (validée en Gate G0 le 2026-11-23)
+- **Statut :** **validé** — les composants peuvent être construits à partir de ce document
 - **Source produit :** `CULTURA_CAHIER_DES_CHARGES_v1.3.md`
 - **Source méthode :** `CULTURA_GUIDE_IA.md` §10
-- **Source identité :** logo et planche fournis (`Icone.jpg`, `Gemini_Generated_Image_*.jpg`)
+- **Source identité :** `logo.svg`, `Icone.svg`, `logo.jpg`, `Icone.jpg`
 - **Source contenu :** `CULTURA_MEDIA_GUIDE_v1.0.docx` §10 (gabarits, hiérarchie)
 
 > Ce document fait foi pour l'interface **et** pour les visuels réseaux sociaux. Le guide média ne redéfinit ni la palette ni les polices.
@@ -165,10 +165,27 @@ C'est le seul moment « spectaculaire » du produit. Le reste ne bouge pas.
 ### 7.1 En-tête
 
 - Hauteur 56 px mobile, 64 px desktop. Fond `paper`, filet inférieur 1 px.
-- À gauche : symbole « C » 24 px + mot « CULTURA » en 800, 15 px, `-0.01em`. Le logotype vectoriel remplace le texte dès qu'il est fourni.
+- À gauche : **logotype vectoriel** `logo.svg` (version horizontale), hauteur 24 px mobile / 28 px desktop, largeur libre, jamais déformé. En attendant une version détourée, repli typographique : symbole « C » + mot « CULTURA » en 800, 15 px, `-0.01em`.
 - À droite : sélecteur de langue (`PT ▾`), recherche (icône 20 px + libellé accessible), compte.
 - Desktop : navigation inline `Hoje · Semana · Atores · Cidades` à droite du logo. Item actif : texte `ink` + filet `terracotta` 3 px sous le mot, à 6 px.
 - Mobile : pas de menu hamburger pour la navigation principale — barre basse.
+
+### 7.1.1 Le logotype (acquis le 2026-11-23)
+
+Le logotype est **peint au pinceau**, pas composé en Archivo :
+
+- un « C » brossé, noir, avec une **flèche bicolore** (terracotta en haut, ocre en bas) pointant vers la droite ;
+- le mot `CULTURA` en capitales, tracé irrégulier ;
+- la signature `AGENDA CULTURAL DE ANGOLA` en petites capitales, sous le mot.
+
+Règles :
+
+- Le logotype est **une image**, jamais recomposé en HTML/CSS. Aucun `<h1>` ne contient le mot « CULTURA » en police d'interface.
+- Il ne remplace pas Archivo : Archivo reste la seule police d'interface. Le contraste pinceau / grotesque est **voulu** — c'est la main de l'afficheur contre la rigueur du programme.
+- La flèche du « C » est le seul motif autorisé en dehors de la réglette : elle peut servir de puce de lien sortant, jamais de décoration répétée.
+- Les fichiers fournis (`logo.svg`, `Icone.svg`) sont des **vectorisations automatiques** du visuel : ils contiennent le bruit de compression du JPEG d'origine (traits beiges parasites), des marges vides et plusieurs valeurs de couleur très proches. Voir §15 pour le nettoyage requis avant P1.5.
+
+---
 
 ### 7.2 Barre de navigation mobile
 
@@ -539,13 +556,29 @@ Règles : hiérarchie fixe (date → ville → heures → mention Cultura discr�
 
 ## 15. Gouvernance et éléments manquants
 
-**À fournir par le designer / le porteur de projet :**
+**Reçus le 2026-11-23 :**
 
-- [ ] Logo vectoriel : symbole seul, version horizontale, version verticale, version claire, version sombre (SVG + AI/EPS).
+- [x] Logo vectoriel : `logo.svg` (symbole + mot + signature, horizontal) et `Icone.svg` (symbole seul, carré 1024 × 1024) — **fichiers disparus du disque avant commit**, aperçus conservés dans `brand/`.
+- [x] Références raster de la marque : `logo.jpg`, `Icone.jpg`.
+
+**Qualité des fichiers reçus — à corriger avant P1.5 :**
+
+| Problème | Détail | Correction |
+|---|---|---|
+| Bruit de vectorisation | Les deux SVG contiennent des dizaines de micro-traces beiges issues de la compression du JPEG d'origine | Nettoyer ou retracer depuis un PNG propre à 2048 px |
+| Couleurs non normalisées | Terracotta `#c95136` / `#c94e32`, ocre `#d89b2d` / `#d99a28`, papier `#f8f7f2` / `#fdfdfa`, noir `#0e0e0b` / `#1d1d1d` | Ramener à `#C84B31`, `#D99B26`, `#FBF9F5`, `#1A1A1A` |
+| Marges vides | Le dessin n'occupe qu'une partie du `viewBox` (beaucoup de blanc autour) | Recadrer à la boîte englobante exacte |
+| Poids | 189 Ko et 146 Ko pour un logotype | Viser < 20 Ko par fichier après nettoyage |
+| Variantes absentes | Pas de version verticale, pas de version claire sur fond sombre, pas de monochrome | Décliner depuis le master nettoyé |
+
+**Encore à fournir :**
+
+- [ ] Master propre : SVG recadré, couleurs normalisées, sans bruit (ou AI/EPS source).
+- [ ] Variantes : verticale, claire sur charbon, monochrome (pour l'APK et les tampons).
 - [ ] Favicon 32 px, icône 180 px, icône maskable 512 px, image de partage OG 1200 × 630 (gabarit).
 - [ ] Confirmation de la licence de la police (Archivo, SIL OFL) et des fichiers source.
-- [ ] Validation de la palette et du concept (§1) par l'humain.
-- [ ] Validation des wireframes des 4 écrans clés.
+- [x] Validation de la palette et du concept (§1) par l'humain — 2026-11-23.
+- [x] Validation des wireframes des 4 écrans clés — 2026-11-23.
 - [ ] Relecture du vocabulaire PT-AO (`i18n/GLOSSAIRE.md`).
 
 **Règle de modification :** toute évolution du design passe par une mise à jour de ce fichier, une capture avant/après et la revue `designer-critic`. Pas de couleur ou de police ajoutée à la volée dans un composant.

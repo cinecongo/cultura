@@ -1,6 +1,6 @@
 # ADR-004 — Accès aux données, validation, pagination et score
 
-- **Statut :** Proposé — validation humaine requise (Gate G0)
+- **Statut :** Accepté — validé en Gate G0 le 2026-11-23
 - **Date :** 2026-11-23
 - **Décideurs :** architecte + db-security + porteur de projet
 - **Concerne :** P2, P4, P6, P7

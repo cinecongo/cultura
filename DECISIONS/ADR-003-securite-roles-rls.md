@@ -1,6 +1,6 @@
 # ADR-003 — Sécurité : rôles, RLS, mode éditorial et journal immuable
 
-- **Statut :** Proposé — validation humaine requise (Gate G0)
+- **Statut :** Accepté — validé en Gate G0 le 2026-11-23
 - **Date :** 2026-11-23
 - **Décideurs :** architecte + security-reviewer + porteur de projet
 - **Concerne :** P2, P3, P5, P7

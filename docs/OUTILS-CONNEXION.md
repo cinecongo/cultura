@@ -13,7 +13,9 @@
 | npm | 11.19.1 | dépendances |
 | Git | 2.55.0 | dépôt |
 | Supabase CLI | 3.1.0 (3.3.0 disponible) | migrations, types, advisors |
+| Docker | 29.9.3 | base Supabase locale |
 | Java (Temurin) | 17.0.20.1 | build Android (P9) |
+| Edge headless | présent | rendu PNG des SVG, captures |
 | GitHub CLI (`gh`) | **absent** | création du dépôt, secrets |
 | gitleaks | **absent** | scan de secrets (P1.2) |
 | adb / Android Studio | **absent** | émulateur (P9) |
@@ -42,49 +44,77 @@ Ne pas créer le projet `prod` avant P10. Ne jamais utiliser la base `prod` en d
 
 ---
 
-## 3. GitHub
+## 3. GitHub — **fait le 2026-11-23**
 
-1. Créer l'organisation (ou utiliser le compte) : `cultura-ao`.
-2. Créer le dépôt privé `cultura` (sans README, sans `.gitignore` : ils existent déjà).
-3. Ajouter `origin`, pousser la branche `main`.
-4. Protéger `main` : pas de push direct, PR obligatoire, CI verte, 1 revue.
-5. Ajouter les collaborateurs et les secrets d'action (voir §6).
+| Élément | Valeur |
+|---|---|
+| Dépôt | `https://github.com/cinecongo/cultura` (privé) |
+| Branche | `main` → suit `origin/main` |
+| Commit | `9fba525` — `docs: fondations P0 et fichiers de pilotage` |
+| Transport | HTTPS + Git Credential Manager |
+| SSH | non configuré sur ce PC (clé sur le Mac) |
 
 ```bash
-git remote add origin git@github.com:<org>/cultura.git
+# déjà exécuté
+git init
+git config user.name "cinecongo"
+git config user.email "cinecongo@users.noreply.github.com"
 git add .
 git commit -m "docs: fondations P0 et fichiers de pilotage"
 git branch -M main
+git remote add origin https://github.com/cinecongo/cultura.git
 git push -u origin main
 ```
 
-> Le commit initial est en attente : `user.name` et `user.email` ne sont pas configurés sur la machine.
+**Reste à faire (côté humain) :**
+1. Protéger `main` : pas de push direct, PR obligatoire, CI verte, 1 revue.
+2. Ajouter les collaborateurs.
+3. Ajouter les secrets d'action (voir §6).
+4. (Optionnel) ajouter une clé SSH sur ce PC Windows.
+
+```bash
+# vérification
+git remote -v
+git status -sb
+git log --oneline -1
+```
 
 ---
 
-## 4. Supabase
+## 4. Supabase — **dev fait le 2026-11-23**
 
-1. Créer l'organisation, puis **trois projets séparés** : `cultura-dev`, `cultura-staging`, `cultura-prod`.
-2. Choisir la région la plus proche de Luanda (à confirmer selon l'offre disponible).
-3. Récupérer dans `Settings > API` : URL du projet, clé `anon`, clé `service_role` (serveur uniquement).
-4. Renseigner `.env.local` à partir de `.env.example`. **Ne rien coller dans le chat.**
-5. Lier le projet local :
+| Élément | Valeur |
+|---|---|
+| Organisation | `Cultura` — `hhwqgrjtriyimllqwhrp` (plan gratuit) |
+| Projet dev | `cultura-dev` — `rfjoxvlgejcvknowvztj` |
+| Région | `eu-west-1` |
+| État | `ACTIVE_HEALTHY` |
+| Liaison | `supabase link` → OK |
 
 ```bash
-supabase login          # ouvre le navigateur, session personnelle
-supabase link --project-ref <ref-dev>
-supabase projects list  # preuve de connexion
+# déjà exécuté
+supabase orgs create "Cultura" --yes
+supabase projects create cultura-dev --org-id hhwqgrjtriyimllqwhrp --db-password <secret> --region eu-west-1 --yes
+supabase link --project-ref rfjoxvlgejcvknowvztj --yes
 ```
 
-6. Les migrations seront créées en P2.1 puis appliquées avec `supabase db push` (dev uniquement).
-7. Les types seront générés après chaque migration :
+**Pièges rencontrés :**
+
+- `--size micro` est **refusé** sur le plan gratuit (`entitlement_required`). Ne pas le passer.
+- La CLI étiquette le projet comme `environment: production` dans la réponse de `link` : c'est un **libellé**, pas la nature du projet. Toujours vérifier le `project-ref` avant un `db push`.
+- Le mot de passe de la base est dans `%USERPROFILE%\.cultura\` : **à déplacer dans un gestionnaire de mots de passe**.
+
+**Reste à faire :**
+
+1. Créer `cultura-staging` et `cultura-prod` — **plus tard**, avant P10.
+2. Activer la protection contre les fuites de mot de passe, la confirmation d'email, les limites d'inscription.
+3. Générer les types après chaque migration :
 
 ```bash
 supabase gen types typescript --linked > src/lib/supabase/types.ts
 ```
 
-8. Activer la protection contre les fuites de mot de passe, la confirmation d'email et les limites d'inscription.
-9. Ne jamais copier la clé `service_role` dans le client, Vercel `NEXT_PUBLIC_*` ou l'APK.
+4. Ne jamais copier `service_role` dans le client, Vercel `NEXT_PUBLIC_*` ou l'APK.
 
 ---
 
@@ -116,16 +146,18 @@ supabase gen types typescript --linked > src/lib/supabase/types.ts
 
 ## 7. Ce dont j'ai besoin pour continuer (sans secret)
 
-| # | Information | Exemple |
-|---|---|---|
-| 1 | Organisation / compte GitHub | `cultura-ao` |
-| 2 | Nom du dépôt | `cultura` |
-| 3 | Projets Supabase créés (dev/staging/prod) + région | `cultura-dev`, Afrique du Sud |
-| 4 | Domaine retenu | `cultura.ao` |
-| 5 | Compte Vercel (équipe) | `cultura` |
-| 6 | Fournisseur email + domaine d'envoi | Resend, `no-reply@cultura.ao` |
-| 7 | Nom de package Android | `ao.cultura.app` |
-| 8 | Identité Git configurée | nom + email professionnels |
+| # | Information | Exemple | État |
+|---|---|---|---|
+| 1 | Organisation / compte GitHub | `cinecongo` | **reçu** |
+| 2 | Nom du dépôt | `cultura` | **reçu** |
+| 3 | Projet Supabase dev + région | `cultura-dev`, `eu-west-1` | **reçu** |
+| 4 | Domaine retenu | `cultura.ao` | **à fournir** |
+| 5 | Compte Vercel (équipe) | `cultura` | **à fournir** |
+| 6 | Fournisseur email + domaine d'envoi | Resend, `no-reply@cultura.ao` | **à fournir** |
+| 7 | Nom de package Android | `ao.cultura.app` | **à confirmer** |
+| 8 | Identité Git configurée | `cinecongo` + noreply | **fait (locale)** |
+| 9 | Relecteur PT-AO | nom d'une personne | **à fournir** |
+| 10 | Logo master nettoyé | SVG recadré, couleurs normalisées | **à fournir** |
 
 Les clés, elles, sont saisies **par vous** dans `.env.local` et dans les interfaces Vercel/GitHub. Je ne les demande jamais dans la conversation.
 

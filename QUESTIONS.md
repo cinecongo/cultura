@@ -1,8 +1,31 @@
 # QUESTIONS — Arbitrages ouverts (P0.1)
 
 - **Date :** 2026-11-23
-- **Statut :** en attente de réponses humaines — **bloque la Gate G0**
+- **Statut :** **réponses partielles reçues le 2026-11-23** — voir §0 ci-dessous
 - **Règle :** aucune réponse = aucune validation. Ne pas deviner une règle métier (guide §0.7).
+
+---
+
+## 0. Réponses reçues (2026-11-23)
+
+L'humain a répondu « **tu as le go** » et fourni le dépôt GitHub ainsi que les logos vectoriels.
+
+| Réf. | Réponse | Conséquence |
+|---|---|---|
+| Q1 | **Validé** (le « go » couvre `DESIGN.md`) | Composants autorisés ; voir `DESIGN.md` v0.2 |
+| Q2 | **Option A** — catalogues typés maison + `Intl` | ADR-002 accepté |
+| Q3 | **Validé** — deux cibles de build | ADR-001 accepté |
+| Q4 | **Fourni** : `logo.svg`, `Icone.svg` (+ JPG) | Vectoriel reçu, mais vectorisation automatique bruitée : nettoyage requis avant P1.5 (§15 de `DESIGN.md`) |
+| Q5 | **Oui** — 6 catégories, « Concert » = format | Seed P2.4 figé |
+| Q6 | **Oui** — `events` canonique, `format='evenement'` interdit | Correction T2 applicable |
+| Q7 | **Ouvert** — relecteur PT-AO non nommé | Bloque uniquement la validation finale des textes (P8.4), pas le squelette |
+| T1–T17 | **Accepté en bloc** | Corrections appliquées en P2.1 + ADR de schéma |
+| O1 | **`cinecongo/cultura`**, HTTPS, branche `main` poussée | `origin` configuré ; commit `9fba525` |
+| O2 | **Projet `cultura-dev` créé** (`rfjoxvlgejcvknowvztj`) | Lié au dépôt ; `staging`/`prod` plus tard |
+| O3 | **`eu-west-1`** (aucune région africaine proposée par le plan gratuit) | Latence acceptable ; à réévaluer si une région Afrique s'ouvre |
+| O4–O11 | **Ouverts** | Vercel, domaine, email, Turnstile, Sentry, package Android, CI |
+
+**Réserves maintenues :** Q7 (PT-AO), O4–O11 (Vercel, domaine, email, Android), M12 (validation juridique). Elles ne bloquent pas le squelette technique mais bloquent la mise en production.
 
 ---
 
