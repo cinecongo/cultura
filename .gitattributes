@@ -1,0 +1,16 @@
+# Fichiers binaires : jamais de diff textuel ni de textconv (évite les erreurs
+# docx2txt pendant les scans gitleaks et accélère Git).
+*.docx binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.zip binary
+*.apk binary
+*.aab binary

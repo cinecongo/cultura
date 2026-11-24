@@ -17,13 +17,12 @@
 | Java (Temurin) | 17.0.20.1 | build Android (P9) |
 | Edge headless | présent | rendu PNG des SVG, captures |
 | GitHub CLI (`gh`) | **absent** | création du dépôt, secrets |
-| gitleaks | **absent** | scan de secrets (P1.2) |
+| gitleaks | **8.30.1 installé** (`~/.cultura/bin`, PATH utilisateur) | scan de secrets (P1.2) |
 | adb / Android Studio | **absent** | émulateur (P9) |
 
-**À installer avant P1.2/P9 :**
-- `gh` (winget : `winget install GitHub.cli`)
-- `gitleaks` (winget : `winget install Gitleaks.Gitleaks`)
-- Android Studio + SDK + un appareil ou émulateur (P9 uniquement)
+**À installer avant P9 :**
+- Android Studio + SDK + un appareil ou émulateur
+- `gh` si l'installation devient possible (winget absent sur cette machine : télécharger l'archive officielle)
 - Mise à jour Supabase CLI : `npm i -g supabase@latest`
 
 ---

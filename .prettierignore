@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+coverage
+package-lock.json
+android
+brand
+*.jpg
+*.png
+CULTURA_MEDIA_GUIDE_v1.0.docx

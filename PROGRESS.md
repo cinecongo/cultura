@@ -15,7 +15,7 @@
 | P0.3 | Plan de design + revue anti-IA | `VERIFYING` | `DESIGN.md` v0.2 validé ; logos reçus |
 | P0.4 | `.env.example` + glossaire | `VERIFYING` | Fichiers créés + `.env.local` réel |
 | P1.1 | Dépôt et fichiers de pilotage | `VERIFYING` | Commit `9fba525` poussé sur `origin/main` |
-| P1.2 | Outillage (ESLint, TS, Vitest, scripts) | `TODO` | Démarre après verdict P1.1 |
+| P1.2 | Outillage (ESLint, TS, Vitest, scripts) | `VERIFYING` | lint 0 · typecheck 0 · 11/11 tests · audit 0 · secrets 0 |
 | P2 → P10 | — | `TODO` | — |
 
 **Gate G0 : FRANCHIE le 2026-11-23** par validation humaine (« tu as le go »), avec **réserves** :
@@ -54,8 +54,8 @@ La revue indépendante par l'agent `verifier` reste **à faire** pour chaque ét
 | Docker | 29.9.3 | OK (base locale possible) |
 | Java Temurin | 17.0.20.1 | OK |
 | Edge headless | — | OK (rendu PNG des SVG) |
-| GitHub CLI (`gh`) | — | **absent** |
-| gitleaks | — | **absent** |
+| gitleaks | 8.30.1 | OK (`~/.cultura/bin`, PATH utilisateur) |
+| GitHub CLI (`gh`) | — | **absent** (winget indisponible sur cette machine) |
 | adb / Android Studio | — | **absent** |
 
 Préparation détaillée : `docs/OUTILS-CONNEXION.md`.
@@ -97,18 +97,18 @@ Préparation détaillée : `docs/OUTILS-CONNEXION.md`.
 
 Bloqué par l'absence de compte/équipe (O4) et de domaine (O5). Aucun déploiement possible pour l'instant.
 
-### Identité visuelle — reçue puis perdue
+### Identité visuelle — reçue et versionnée
 
 | Fichier | Taille | État |
 |---|---|---|
-| `logo.svg` | 188 760 o | Reçu, rendu vérifié, **disparu du disque** avant le commit |
-| `Icone.svg` | 145 513 o | Idem |
+| `logo.svg` | 188 760 o | Versionné le 2026-11-24 — vectorisation automatique |
+| `Icone.svg` | 145 513 o | Versionné le 2026-11-24 — vectorisation automatique |
 | `logo.jpg` | 355 646 o | Conservé |
 | `Icone.jpg` | 393 415 o | Conservé |
-| `brand/logo-apercu.png` | 125 733 o | Aperçu conservé (rendu Edge 1344 × 756) |
-| `brand/icone-apercu.png` | 69 951 o | Aperçu conservé (rendu Edge 1024 × 1024) |
+| `brand/logo-apercu.png` | 125 733 o | Aperçu de contrôle (rendu Edge 1344 × 756) |
+| `brand/icone-apercu.png` | 69 951 o | Aperçu de contrôle (rendu Edge 1024 × 1024) |
 
-Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGENDA CULTURAL DE ANGOLA`. La vectorisation était automatique, avec bruit de JPEG et marges vides. **Les SVG sont à re-fournir** ; les aperçus servent de référence. Voir `brand/README.md` et `DESIGN.md` §15.
+Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGENDA CULTURAL DE ANGOLA`. Contrôles de sûreté passés : aucun `<script>`, aucune référence externe, aucune entité XML. **Nettoyage requis avant P1.5** (`DESIGN.md` §15).
 
 ---
 
@@ -173,15 +173,17 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 - **Statut :** `VERIFYING`
 - **Skills/agents appelés :** `i18n-auditor` (substitut : relecture interne). Date : 2026-11-23.
 - **Plan :**
-  1. Lister les variables nécessaires, sans aucune valeur.
+  1. Lister les variables nécessaires, sans aucune valeur secrète.
   2. Marquer explicitement ce qui est public et ce qui est secret.
   3. Établir le vocabulaire PT/FR/EN, les termes interdits, les formats de date et monnaie.
 - **Livrables :**
-  - `.env.example` (17 variables nommées, 0 valeur)
+  - `.env.example` — **16 variables**, 2 valeurs par défaut non sensibles (`web`, `pt`), **0 secret**
   - `i18n/GLOSSAIRE.md` (11 sections)
   - `.env.local` (réel, **ignoré par Git**, vérifié via `git check-ignore`)
 - **Preuves :**
   - `git check-ignore -v .env.local` → `.gitignore:25:*.local`
+  - `git grep` sur `eyJhbGciOi`, `sk-…`, `SUPABASE_SERVICE_ROLE_KEY=…` → aucun résultat
+  - Aucun `.env`, `.jks`, `.keystore`, `google-services.json`, `.pem` suivi par Git
   - Longueurs des clés vérifiées sans les afficher.
 - **Verdict verifier :** en attente.
 - **Points à valider :** « agente cultural » vs « ator cultural » (Q7).
@@ -214,6 +216,68 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 
 ---
 
+## [P1.2] Outillage
+
+- **Statut :** `VERIFYING`
+- **Skills/agents appelés :** `qa-tester` (substitut : écriture des tests par le constructeur, à revalider), `security-reviewer` (substitut : gitleaks + audit npm). Date : 2026-11-24.
+- **Plan :**
+  1. `package.json` avec scripts reproductibles, sans dépendance superflue.
+  2. TypeScript strict, ESLint plat, Prettier, Vitest.
+  3. Validation typée des variables d'environnement (public / serveur séparés).
+  4. Scan de secrets et audit de dépendances réellement exécutables.
+- **Versions installées (résolues par npm, non devinées) :**
+
+| Paquet | Version |
+|---|---|
+| `next` | 16.4.6 |
+| `react` / `react-dom` | 19.3.1 |
+| `@supabase/supabase-js` | 2.119.2 |
+| `zod` | 4.6.7 |
+| `typescript` | 6.0.3 |
+| `eslint` | 10.15.0 |
+| `eslint-config-next` | 16.4.6 |
+| `typescript-eslint` | 8.74.0 |
+| `vitest` | 5.1.1 |
+| `tailwindcss` / `@tailwindcss/postcss` | 4.3.5 |
+| `prettier` | 3.10.1 |
+| `cross-env` | 10.1.0 |
+
+- **Livrables :**
+  - `package.json` (scripts `dev`, `build:web`, `build:mobile`, `lint`, `typecheck`, `test`, `format:check`, `secrets`, `audit`)
+  - `tsconfig.json` (strict + `noUncheckedIndexedAccess` + `noUnusedLocals` + alias `@/*`)
+  - `eslint.config.mjs` (config plate Next 16 + typescript-eslint, `any` interdit)
+  - `.prettierrc.json`, `.prettierignore`, `.editorconfig`
+  - `vitest.config.mts` (alias `@`, couverture v8)
+  - `postcss.config.mjs` (Tailwind 4)
+  - `.gitleaks.toml`, `.gitattributes`
+  - `src/lib/env.ts` — validation des variables **publiques**, sans fuite de valeur dans les erreurs
+  - `src/lib/env.server.ts` — secrets serveur, lève une erreur si importé côté navigateur
+  - `tests/env.test.ts` — 11 tests
+- **Preuves (exécutées le 2026-11-24) :**
+
+| Commande | Résultat |
+|---|---|
+| `npm run lint` | **0 erreur, 0 avertissement** |
+| `npm run typecheck` | **0 erreur** |
+| `npm run test` | **11/11 tests passés** (1 fichier, 704 ms) |
+| `npm run format:check` | **tous les fichiers conformes** |
+| `npm run audit` | **0 vulnérabilité** |
+| `npm run secrets` | **0 fuite**, 2 commits scannés, 302 Ko |
+
+- **Écarts corrigés en cours de route :**
+  1. TypeScript 6 refuse `baseUrl` (déprécié) → suppression, `paths` relatifs au `tsconfig.json`.
+  2. Vitest chargeait `vitest.config.ts` en CommonJS → renommé `vitest.config.mts`.
+  3. ESLint signalait `no-html-link-for-pages` sans dossier `pages` → règle désactivée (App Router uniquement) et export nommé pour supprimer l'avertissement.
+  4. Un test « ne divulgue pas la valeur » passait pour une mauvaise raison (valeur assez longue pour être valide) → valeur raccourcie pour déclencher réellement l'erreur.
+  5. `gitleaks` déclenchait `docx2txt.exe: command not found` via le textconv Git sur le `.docx` → `.gitattributes` marque les binaires.
+- **Verdict verifier :** en attente (auto-contrôle uniquement).
+- **Dette assumée :**
+  - `npm run build:web` et `build:mobile` **échouent encore** : il n'y a pas encore de dossier `app/` (P1.3). C'est attendu.
+  - Aucune CI GitHub Actions (O11) : le workflow viendra quand `gh` ou l'interface web sera disponible.
+  - `typescript-eslint` 8.74 et `eslint` 10 ont produit des avertissements de pair-dépendance à l'installation ; le lint fonctionne (0 erreur), mais la combinaison est à surveiller à la prochaine montée de version.
+
+---
+
 ## Décisions validées
 
 | Réf. | Décision | Statut | Date |
@@ -223,6 +287,51 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 | ADR-003 | RLS, rôles, journal immuable | **Accepté** (revue `security-reviewer` à faire en P2) | 2026-11-23 |
 | ADR-004 | Données, mutations, pagination, score | **Accepté** (revue `db-security` à faire en P2) | 2026-11-23 |
 | DESIGN.md | Identité et composants | **Validé** (v0.2) | 2026-11-23 |
+
+---
+
+## Auto-contrôle P0.1 → P1.1 (2026-11-24)
+
+> **Substitution obligatoire.** L'agent `verifier` devait rendre un verdict indépendant. Le sous-agent a échoué dès son lancement (limite d'usage du fournisseur). Conformément à `AGENTS.md` §5, la substitution est consignée ici : **cet auto-contrôle n'est pas un verdict indépendant**. Il ne vaut pas `DONE` ; les étapes restent `VERIFYING` jusqu'à relecture humaine.
+
+### Commandes exécutées et résultats
+
+| Contrôle | Commande | Résultat |
+|---|---|---|
+| Historique Git | `git log --oneline -3` | `4563332`, `9fba525` |
+| Synchronisation | `git status -sb` | `## main...origin/main` |
+| Secrets (motifs connus) | `git grep -n -I -E "eyJhbGciOi|sk-[A-Za-z0-9]{20,}|SUPABASE_SERVICE_ROLE_KEY=…"` | **0 résultat** |
+| `.env.local` ignoré | `git check-ignore -v .env.local` | `.gitignore:25:*.local` |
+| Fichiers sensibles suivis | `git ls-files` filtré | **0** (aucun `.env`, `.jks`, `.keystore`, `google-services.json`, `.pem`) |
+| `.env.example` | script Node | 16 variables, 2 valeurs par défaut non sensibles, **0 secret** |
+| Contrastes WCAG | script Node, formule officielle | **10/10 paires exactes**, delta max **0,005** |
+| Seuils WCAG | 9 assertions | **0 échec** |
+| Agents définis | comptage | **10** + README |
+| Liens Markdown | script de résolution | **0 lien cassé** |
+| Encodage | script Node (séquences de mojibake, U+FFFD) | **0 mojibake** |
+| SVG fournis | inspection | aucun `<script>`, aucune référence externe, aucune entité XML |
+
+### Écarts constatés et corrigés
+
+1. `PROGRESS.md` annonçait « 17 variables, 0 valeur » : c'est **16 variables**, dont 2 ont une valeur par défaut **non sensible** (`web`, `pt`). Corrigé.
+2. Les ADR ont été corrompus en cours de route par un `Set-Content` PowerShell (mojibake sur les tirets cadratins), puis restaurés depuis Git et réécrits en UTF-8 strict via Node. Vérifié : 0 mojibake.
+3. `logo.svg` et `Icone.svg` ont brièvement disparu du disque ; ils sont rétablis et versionnés.
+
+### Réserve principale
+
+`DESIGN.md` §15 : les SVG sont des vectorisations automatiques d'un JPEG. Ils contiennent du bruit de compression et des couleurs non alignées sur les tokens. **Le logotype n'est pas utilisable tel quel en production** ; le repli typographique est prévu.
+
+### Verdict de l'auto-contrôle
+
+```
+Étape : P0.1 → P1.1
+Verdict : VALIDÉ SOUS RÉSERVE — non indépendant
+Bloquants : 0
+Réserves :
+  - verdict indépendant à obtenir (humain ou `verifier`)
+  - master logo nettoyé avant P1.5
+  - Q7 (PT-AO), O4–O11, M12 toujours ouverts
+```
 
 ---
 
@@ -244,13 +353,12 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 
 ## Prochaine action
 
-1. Verdict indépendant `verifier` sur P0.1 → P1.1.
-2. **P1.2** : outillage — `package.json`, TypeScript strict, ESLint, Prettier, Vitest, scripts npm, `.editorconfig`.
-3. **P1.3** : squelette Next.js App Router + couche `platform` + deux builds.
-4. **P1.4** : i18n typé PT/FR/EN (ADR-002) sur 3 écrans.
-5. **P1.5** : tokens de design + en-tête + réglette horaire.
-6. En parallèle, côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email.
+1. **P1.3** : squelette Next.js App Router — `app/`, `next.config.ts` lisant `BUILD_TARGET`, couche `src/lib/platform/` (routes, images, stockage), deux builds qui passent.
+2. **P1.4** : i18n typé PT/FR/EN (ADR-002) sur 3 écrans.
+3. **P1.5** : tokens de design + en-tête + réglette horaire.
+4. Verdict indépendant `verifier` sur P0.1 → P1.2 (auto-contrôle seulement pour l'instant).
+5. En parallèle, côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email, relecteur PT-AO, master logo nettoyé.
 
 ---
 
-*Dernière mise à jour : 2026-11-23.*
+*Dernière mise à jour : 2026-11-24.*

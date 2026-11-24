@@ -1,18 +1,22 @@
-# brand/ — références visuelles
+# brand/ — actifs de marque
 
-Ce dossier contient des **aperçus raster** des logos Cultura, pas les masters vectoriels.
-
-| Fichier | Source | Usage |
+| Fichier | Type | Usage |
 |---|---|---|
-| `logo-apercu.png` | rendu Edge headless de `logo.svg` (1344 × 756) | référence visuelle, revue de design |
-| `icone-apercu.png` | rendu Edge headless de `Icone.svg` (1024 × 1024) | référence visuelle, revue de design |
+| `../logo.svg` | vectoriel, 1344 × 756 | logotype horizontal (symbole + mot + signature) |
+| `../Icone.svg` | vectoriel, 1024 × 1024 | symbole seul (icône, favicon source) |
+| `../logo.jpg` | raster 355 646 o | référence de la planche d'origine |
+| `../Icone.jpg` | raster 393 415 o | référence de la planche d'origine |
+| `logo-apercu.png` | raster 1344 × 756 | aperçu de contrôle (rendu Edge headless) |
+| `icone-apercu.png` | raster 1024 × 1024 | aperçu de contrôle (rendu Edge headless) |
 
-**Historique :** `logo.svg` (188 760 o) et `Icone.svg` (145 513 o) ont été fournis le 2026-11-23, rendus pour vérification, puis ont disparu du disque avant le commit. Seuls ces aperçus subsistent.
+Les deux SVG ont été fournis le 2026-11-23, brièvement absents du disque, puis rétablis et **versionnés le 2026-11-24**. Ils ne contiennent ni script, ni référence externe, ni entité XML — vérifié avant commit.
 
-**À fournir pour la production :**
+**Qualité :** vectorisation automatique d'un JPEG. Elle conserve donc (a) des micro-traces beiges de compression, (b) un `viewBox` plus grand que le dessin, (c) plusieurs valeurs de couleur très proches de la palette. Voir `DESIGN.md` §15.
 
-1. Le master vectoriel nettoyé (SVG recadré, couleurs normalisées, sans bruit de vectorisation).
-2. Les variantes : verticale, claire sur fond charbon, monochrome.
+**À produire avant P1.5 :**
+
+1. Master nettoyé : SVG recadré à la boîte englobante, couleurs ramenées aux tokens, sans bruit.
+2. Variantes : verticale, claire sur charbon, monochrome.
 3. Favicon 32 px, icône 180 px, icône maskable 512 px, gabarit OG 1200 × 630.
 
-**Interdit :** utiliser ces PNG comme logo de production — ils sont trop lourds et non détourés. Voir `DESIGN.md` §15.
+**Interdit :** utiliser les JPG comme logo de production, et ne jamais insérer un SVG fourni par un utilisateur sans le nettoyer (règle de sécurité `AGENTS.md` §7).

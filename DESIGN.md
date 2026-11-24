@@ -558,7 +558,7 @@ Règles : hiérarchie fixe (date → ville → heures → mention Cultura discr�
 
 **Reçus le 2026-11-23 :**
 
-- [x] Logo vectoriel : `logo.svg` (symbole + mot + signature, horizontal) et `Icone.svg` (symbole seul, carré 1024 × 1024) — **fichiers disparus du disque avant commit**, aperçus conservés dans `brand/`.
+- [x] Logo vectoriel : `logo.svg` (symbole + mot + signature, horizontal) et `Icone.svg` (symbole seul, carré 1024 × 1024) — **versionnés le 2026-11-24**, contrôlés (aucun script, aucune référence externe).
 - [x] Références raster de la marque : `logo.jpg`, `Icone.jpg`.
 
 **Qualité des fichiers reçus — à corriger avant P1.5 :**

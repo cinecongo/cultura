@@ -1,0 +1,16 @@
+# Configuration gitleaks — Cultura
+# Étend la règles par défaut, puis exclut les fichiers binaires ou volumineux
+# qui ne peuvent pas contenir de secret exploitable.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Binaires, verrous et médias exclus du scan"
+paths = [
+  '''CULTURA_MEDIA_GUIDE_v1\.0\.docx''',
+  '''package-lock\.json''',
+  '''brand/.*\.png''',
+  '''.*\.jpg''',
+  '''.*\.docx''',
+]
