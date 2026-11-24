@@ -16,6 +16,8 @@
  * Variables d'environnement :
  *   EDGE_PATH   chemin de msedge.exe (détecté automatiquement sinon)
  *   PAGE_PATH   chemin demandé au serveur (défaut : /)
+ *   PAGE_COOKIE cookie posé avant navigation, au format `nom=valeur`
+ *               (sert à prouver la mémorisation du choix de langue)
  */
 'use strict';
 
@@ -126,6 +128,8 @@ const EXPRESSION = `(() => {
   }));
   return {
     viewport: { width: window.innerWidth, height: window.innerHeight },
+    // URL réelle après chargement : prouve une éventuelle redirection.
+    url: location.href,
     scrollWidth: document.documentElement.scrollWidth,
     lang: document.documentElement.lang,
     title: document.title,
@@ -211,6 +215,20 @@ const EXPRESSION = `(() => {
 
   await send('Page.enable');
   await send('Runtime.enable');
+
+  // Cookie posé avant la navigation : prouve la priorité du choix mémorisé.
+  const pageCookie = process.env.PAGE_COOKIE;
+  if (pageCookie) {
+    const separator = pageCookie.indexOf('=');
+    await send('Network.enable');
+    await send('Network.setCookie', {
+      name: pageCookie.slice(0, separator),
+      value: pageCookie.slice(separator + 1),
+      url: `http://127.0.0.1:${port}/`,
+      path: '/',
+    });
+  }
+
   // Viewport forcé : `--window-size` ne donne pas la même largeur à l'écran
   // et au layout, ce qui produit de faux débordements.
   await send('Emulation.setDeviceMetricsOverride', {
@@ -223,7 +241,7 @@ const EXPRESSION = `(() => {
   await sleep(1500);
 
   const evaluated = await send('Runtime.evaluate', { expression: EXPRESSION, returnByValue: true });
-  const report = { url, requested: { width, height }, ...evaluated.result.value };
+  const report = { requestedUrl: url, requested: { width, height }, ...evaluated.result.value };
   console.log(JSON.stringify(report, null, 2));
 
   if (shotPath) {

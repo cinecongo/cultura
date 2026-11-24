@@ -1,4 +1,4 @@
-import { locales, type Locale } from '@/lib/env';
+import { isLocale, type Locale } from '@/lib/i18n/locale';
 
 /**
  * Routes canoniques, une seule source de vérité (ADR-001 §5).
@@ -9,11 +9,10 @@ import { locales, type Locale } from '@/lib/env';
  * produisent exactement les mêmes chemins.
  */
 
-export type RouteName =
-  'home' | 'today' | 'week' | 'actors' | 'cities' | 'search' | 'event' | 'actor';
+export type RouteName = 'today' | 'week' | 'actors' | 'cities' | 'search' | 'event' | 'actor';
 
 export type Route =
-  | { readonly name: 'home' | 'today' | 'week' | 'actors' | 'cities' | 'search' }
+  | { readonly name: 'today' | 'week' | 'actors' | 'cities' | 'search' }
   | { readonly name: 'event'; readonly slug: string }
   | { readonly name: 'actor'; readonly slug: string };
 
@@ -21,8 +20,8 @@ type SegmentTable = Record<RouteName, string>;
 
 const segments: Record<Locale, SegmentTable> = {
   pt: {
-    home: '',
-    today: 'hoje',
+    // « Aujourd'hui » est la page d'accueil : elle vit à la racine de la langue.
+    today: '',
     week: 'semana',
     actors: 'atores',
     cities: 'cidades',
@@ -31,8 +30,7 @@ const segments: Record<Locale, SegmentTable> = {
     actor: 'ator',
   },
   fr: {
-    home: '',
-    today: 'aujourdhui',
+    today: '',
     week: 'semaine',
     actors: 'acteurs',
     cities: 'villes',
@@ -41,8 +39,7 @@ const segments: Record<Locale, SegmentTable> = {
     actor: 'acteur',
   },
   en: {
-    home: '',
-    today: 'today',
+    today: '',
     week: 'week',
     actors: 'actors',
     cities: 'cities',
@@ -76,7 +73,7 @@ export function routePath(locale: Locale, route: Route): string {
   const base = `/${locale}`;
 
   switch (route.name) {
-    case 'home':
+    case 'today':
       return base;
     case 'event':
       return `${base}/${table.event}/${assertSlug(route.slug)}`;
@@ -85,10 +82,6 @@ export function routePath(locale: Locale, route: Route): string {
     default:
       return `${base}/${table[route.name]}`;
   }
-}
-
-export function isLocale(value: string): value is Locale {
-  return (locales as readonly string[]).includes(value);
 }
 
 /** Extrait la langue du premier segment d'un chemin, ou `null`. */

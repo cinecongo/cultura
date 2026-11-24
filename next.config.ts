@@ -14,6 +14,11 @@ const target = process.env.BUILD_TARGET === 'mobile' ? 'mobile' : 'web';
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    // Deux layouts racines (document par défaut / document localisé) : Next a
+    // besoin d'une 404 globale pour produire un document complet.
+    globalNotFound: true,
+  },
   /*
    * Pas de `distDir` personnalisé : avec `output: 'export'`, Next écrit le site
    * statique dans `out/`, que Capacitor attend. Conséquence assumée : `.next`

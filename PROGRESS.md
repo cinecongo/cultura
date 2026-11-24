@@ -17,6 +17,7 @@
 | P1.1 | Dépôt et fichiers de pilotage | `VERIFYING` | Commit `9fba525` poussé sur `origin/main` |
 | P1.2 | Outillage (ESLint, TS, Vitest, scripts) | `VERIFYING` | lint 0 · typecheck 0 · 11/11 tests à l'époque · audit 0 · secrets 0 |
 | P1.3 | Squelette App Router + couche `platform` + deux builds | `VERIFYING` | `build:web` 0 · `build:mobile` 0 · `out/` réel · 28/28 tests · rendu mesuré à 360 px |
+| P1.4 | i18n typé PT-AO/FR/EN + 2 écrans + résolveur | `VERIFYING` | 7 pages · 82/82 tests · 0 lien mort sur 48 · typecheck casse si une clé manque |
 | P2 → P10 | — | `TODO` | — |
 
 **Gate G0 : FRANCHIE le 2026-11-23** par validation humaine (« tu as le go »), avec **réserves** :
@@ -329,6 +330,69 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 
 ---
 
+## [P1.4] i18n typé PT-AO / FR / EN
+
+- **Statut :** `VERIFYING`
+- **Skills/agents appelés :** `engineering:system-design` (substitut : ADR-002, déjà accepté) ; `design:ux-copy` (substitut : `i18n/GLOSSAIRE.md` §2, §6, §9 — les textes PT restent à relire par un locuteur angolais, Q7). Date : 2026-11-24.
+- **Plan :**
+  1. Catalogues typés, `pt.ts` source de vérité du type : une clé manquante casse le typecheck.
+  2. `Intl` pour les dates, heures, nombres et kwanzas, fuseau `Africa/Luanda`.
+  3. Segments d'URL localisés, `<html lang>`, canonique et `hreflang`.
+  4. Sélecteur de langue mémorisé par cookie, résolveur à la racine.
+  5. Deux garde-fous automatiques : zéro texte en dur, zéro terme interdit.
+- **Livrables :**
+  - `src/lib/i18n/locale.ts` — langues, résolution (URL → cookie → navigateur → pt), `pt-AO`, `en-GB`
+  - `src/lib/i18n/messages/{pt,fr,en,types}.ts` — catalogues ; `fr` et `en` annotés `satisfies Messages`
+  - `src/lib/i18n/format.ts` — `formatDate`, `formatDateRange`, `formatTime`, `formatNumber`, `formatKz`
+  - `src/lib/i18n/index.ts` — `t`, `tp`, `interpolate`, types `StringKey` / `PluralKey`
+  - `src/lib/i18n/cookie.ts` — cookie pur (sérialisation + lecture), sans effet de bord
+  - `src/lib/seo.ts` — canonique + `hreflang` (pt-AO, fr, en, x-default)
+  - `src/lib/site.ts` — noms propres non traduisibles (`Cultura`, `Luanda`)
+  - `src/components/site-header.tsx`, `language-switcher.tsx`
+  - `src/app/(default)/layout.tsx`, `page.tsx` (résolveur), `src/app/global-not-found.tsx`
+  - `src/app/(localized)/[locale]/layout.tsx`, `page.tsx`, `[locale]/[section]/page.tsx`
+  - `tests/i18n.test.ts`, `format.test.ts`, `locale.test.ts`, `copy-rules.test.ts`
+- **Preuves (exécutées le 2026-11-24) :**
+
+| Commande | Résultat |
+|---|---|
+| `npm run build:web` | **exit 0** — 7 pages générées (`/pt`, `/fr`, `/en`, `/pt/semana`, `/fr/semaine`, `/en/week`, 404) |
+| `npm run build:mobile` | **exit 0** — export statique complet dans `out/` |
+| `npm run typecheck` | **0 erreur** |
+| `npm run test` | **82/82 tests** (7 fichiers) |
+| `npm run lint` | **0 erreur, 0 avertissement** |
+| `npm run format:check` | **conforme** |
+| `npm run audit` | **0 vulnérabilité** |
+| `npm run secrets` | **0 fuite** (4 commits, 955 Ko) |
+| Contrôle d'encodage | **0 mojibake** sur 77 fichiers |
+| Crawl du site exporté | **10 pages, 48 liens internes, 0 lien mort** |
+| `node scripts/measure-render.cjs` | `scrollWidth = 360`, `overflowing = []` sur `/fr` et `/fr/semaine` |
+
+- **Preuves ciblées de l'ADR-002 (vérification §1 à §5) :**
+  1. **Une clé retirée casse le typecheck.** Retrait de `'nav.week'` dans `fr.ts` → `TS2741` + `TS1360`, code de sortie 2 ; fichier restauré à l'identique, typecheck de nouveau à 0.
+  2. **`t()` et `tp()`** : 3 langues testées ; `tp` rend « 1 evento / 8 eventos », « 1 événement / 8 événements », « 1 event / 8 events », et « 1,500 events » / « 1 500 eventos » pour les milliers.
+  3. **Cohérence URL / cookie / `lang`** mesurée dans un vrai navigateur : `/` avec navigateur en français → `/fr/` et `lang="fr"` ; `/` avec cookie `cultura_locale=pt` → `/pt/` et `lang="pt-AO"` (le cookie l'emporte, comme prévu).
+  4. **Aucun texte visible en dur** : parcours d'AST TypeScript des 9 composants (`ts.isJsxText` + attributs `aria-label`/`title`/`alt`/`placeholder`), 0 violation ; un test de contrôle vérifie que le détecteur détecte réellement. Aucun `href="/…"` écrit à la main.
+  5. **Formats** : « 24 de novembro de 2026 » / « 24 novembre 2026 » / « 24 November 2026 » ; « 18h00 » / « 18 h 00 » / « 18:00 » ; « 1 500 Kz » ; passage de minuit UTC 23:30 → 25 novembre à Luanda (preuve du fuseau).
+- **Écarts corrigés en cours de route :**
+  1. **`/pt/hoje` n'existait pas.** Le premier modèle de routes donnait à « Aujourd'hui » un segment `hoje`, alors que la page vit à la racine de la langue. Résultat mesuré dans le HTML : canonique `…/pt/hoje/`, `x-default` identique, et **4 liens morts** par page. `home` a été supprimé et `today` pointe sur `''` : `/pt`, `/fr`, `/en`. Crawl après correction : 0 lien mort.
+  2. **404 sans document.** Avec deux layouts racines, Next produisait `404.html` sans `lang` et avec le texte anglais par défaut. Corrigé par `src/app/global-not-found.tsx` + `experimental.globalNotFound` : `404.html` a maintenant `lang="pt-AO"` et affiche les trois langues.
+  3. **Faux positif du détecteur de texte en dur.** Une expression régulière sur le fichier confondait un type générique suivi d'un `return (` avec du JSX. Remplacée par un parcours d'AST TypeScript.
+  4. **`Intl` et l'heure angolaise.** `Intl` rend « 18:00 » dans les trois langues ; le glossaire exige « 18h00 » (PT) et « 18 h 00 » (FR). L'heure est donc composée à partir de `formatToParts` (chiffres fournis par `Intl`), jamais par concaténation de chaînes formatées à la main.
+  5. **Plage de dates anglaise.** `en-GB` insère une espace fine (U+2009) autour du tiret : « 24 – 30 November 2026 ». Le test attend la sortie réelle du moteur, pas une approximation.
+  6. **`react-hooks/immutability`** refusait l'écriture de `document.cookie` dans le corps du composant : l'effet de bord est sorti dans une fonction de module.
+- **Verdict verifier :** en attente (auto-contrôle uniquement).
+- **Dette assumée :**
+  - **Archivo toujours non embarquée** : le rendu utilise la pile de repli. P1.5.
+  - **`canonical` et `hreflang` pointent sur `http://localhost:3000`** (valeur de `NEXT_PUBLIC_SITE_URL` en local). À corriger dès que le domaine existe (O5).
+  - **`tp()` n'est encore appelé par aucun écran** : sans données, un compteur n'aurait rien à compter. Testé, il entrera en service en P3 avec les événements.
+  - **Les formateurs de date, heure et Kz ne sont pas encore affichés** : les écrans n'ont ni date ni prix tant qu'il n'y a pas de données. Prouvés par tests, ils seront utilisés par la réglette (P1.5) et les fiches (P3).
+  - **Le cookie est écrit côté navigateur**, pas par un serveur : l'export statique n'a pas de serveur. Conséquence assumée et documentée dans le résolveur.
+  - **Les textes PT attendent la relecture PT-AO (Q7)** ; les choix « agente cultural », « Gosto », « Favorito » restent ouverts.
+  - La 404 affiche les trois langues au lieu d'une seule : une 404 localisée suppose un segment de langue connu, ce qui n'est pas le cas d'une adresse inexistante.
+
+---
+
 ## Décisions validées
 
 | Réf. | Décision | Statut | Date |
@@ -404,10 +468,10 @@ Réserves :
 
 ## Prochaine action
 
-1. **P1.4** : i18n typé PT/FR/EN (ADR-002) — catalogues, `Intl` pour dates et nombres, segment `[locale]`, 3 écrans réels (`/pt`, `/fr`, `/en`) et navigation complète.
-2. **P1.5** : tokens de design complets + en-tête + réglette horaire (+ embarquement d'Archivo).
-3. Verdict indépendant `verifier` sur P0.1 → P1.3 (auto-contrôle seulement pour l'instant).
-4. En parallèle, côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email, relecteur PT-AO, master logo nettoyé, validation juridique M12.
+1. **P1.5** : tokens de design complets + en-tête + réglette horaire (+ embarquement d'Archivo, en attente du master logo propre).
+2. **P2** : schéma Supabase (migrations, RLS, `moderation_log`), revue `db-security` / `security-reviewer`.
+3. Verdict indépendant `verifier` sur P0.1 → P1.4 (auto-contrôle seulement pour l'instant).
+4. En parallèle, côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12).
 
 ---
 

@@ -1,13 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
 import { isValidSlug, localeFromPath, routePath, segmentsFor } from '@/lib/platform/routes';
-import { locales } from '@/lib/env';
+import { locales } from '@/lib/i18n/locale';
 
 describe('routePath', () => {
   it('préfixe toujours la langue', () => {
-    expect(routePath('pt', { name: 'home' })).toBe('/pt');
-    expect(routePath('fr', { name: 'today' })).toBe('/fr/aujourdhui');
+    expect(routePath('pt', { name: 'today' })).toBe('/pt');
+    expect(routePath('fr', { name: 'today' })).toBe('/fr');
     expect(routePath('en', { name: 'week' })).toBe('/en/week');
+  });
+
+  it('place « Aujourd’hui » à la racine de la langue', () => {
+    for (const locale of locales) {
+      expect(routePath(locale, { name: 'today' })).toBe(`/${locale}`);
+    }
   });
 
   it('localise les segments', () => {
@@ -26,7 +32,7 @@ describe('routePath', () => {
 
   it('ne produit jamais de slash final', () => {
     for (const locale of locales) {
-      for (const name of ['home', 'today', 'week', 'actors', 'cities', 'search'] as const) {
+      for (const name of ['today', 'week', 'actors', 'cities', 'search'] as const) {
         expect(routePath(locale, { name }).endsWith('/')).toBe(false);
       }
     }
@@ -52,7 +58,6 @@ describe('segmentsFor', () => {
     for (const locale of locales) {
       const table = segmentsFor(locale);
       for (const key of [
-        'home',
         'today',
         'week',
         'actors',

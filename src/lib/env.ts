@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { defaultLocale, locales } from './i18n/locale';
+
 /**
  * Variables publiques : préfixe NEXT_PUBLIC_, embarquées dans le JavaScript
  * du navigateur et dans l'APK. Aucun secret ici (AGENTS.md §7).
@@ -16,10 +18,8 @@ const isUrl = (value: string): boolean => {
   }
 };
 
-export const locales = ['pt', 'fr', 'en'] as const;
 export const appTargets = ['web', 'mobile'] as const;
 
-export type Locale = (typeof locales)[number];
 export type AppTarget = (typeof appTargets)[number];
 
 export const publicEnvSchema = z.object({
@@ -27,7 +27,7 @@ export const publicEnvSchema = z.object({
     .string()
     .refine(isUrl, 'doit être une URL absolue http(s), sans slash final'),
   NEXT_PUBLIC_APP_TARGET: z.enum(appTargets).default('web'),
-  NEXT_PUBLIC_DEFAULT_LOCALE: z.enum(locales).default('pt'),
+  NEXT_PUBLIC_DEFAULT_LOCALE: z.enum(locales).default(defaultLocale),
   NEXT_PUBLIC_SUPABASE_URL: z.string().refine(isUrl, 'doit être une URL absolue http(s)'),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20, 'clé anon manquante ou tronquée'),
 });
