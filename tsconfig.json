@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowJs": false,
@@ -19,7 +19,11 @@
     "isolatedModules": true,
     "incremental": true,
     "noEmit": true,
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
       "@/*": ["./src/*"]
     }
@@ -30,7 +34,9 @@
     "src/**/*.tsx",
     "tests/**/*.ts",
     "vitest.config.mts",
-    "postcss.config.mjs"
+    "postcss.config.mjs",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules", ".next", "out", "android"]
 }

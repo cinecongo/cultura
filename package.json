@@ -18,8 +18,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\" \"*.{json,mjs,mts}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\" \"*.{json,mjs,mts}\"",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\" \"scripts/**/*.cjs\" \"*.{json,mjs,mts}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\" \"scripts/**/*.cjs\" \"*.{json,mjs,mts}\"",
+    "measure": "node scripts/measure-render.cjs",
     "secrets": "gitleaks detect --no-banner --redact",
     "audit": "npm audit --audit-level=high"
   },

@@ -9,7 +9,8 @@ out/
 dist/
 build/
 *.tsbuildinfo
-next-env.d.ts
+# `next-env.d.ts` est généré par Next mais versionné : sans lui, un clone neuf
+# ne peut pas passer `npm run typecheck` avant d'avoir lancé un build.
 
 # Tests
 coverage/

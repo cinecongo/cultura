@@ -1,0 +1,58 @@
+@import 'tailwindcss';
+
+/*
+ * Tokens de design — source unique : DESIGN.md §3.
+ * Toute couleur utilisée dans un composant doit venir d'ici.
+ */
+@theme {
+  --color-paper: #fbf9f5;
+  --color-sand: #f2ece3;
+  --color-line: #ddd5c8;
+  --color-ink: #1a1a1a;
+  --color-stone: #6e655b;
+  --color-terra: #422e27;
+  --color-stone-light: #b9afa3;
+  --color-terracotta: #c84b31;
+  --color-terracotta-text: #a33520;
+  --color-ochre: #d99b26;
+
+  /* Archivo n'est pas encore installée (licence + fichiers à fournir, DESIGN.md §15).
+     La pile ci-dessous est un repli explicite, pas un choix définitif. */
+  --font-sans:
+    Archivo, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+
+  --radius-card: 2px;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Focus visible unique, jamais supprimé (DESIGN.md §12). */
+  :focus-visible {
+    outline: 2px solid var(--color-terracotta-text);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

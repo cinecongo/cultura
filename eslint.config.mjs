@@ -36,6 +36,15 @@ const config = [
       'no-console': 'off',
     },
   },
+  {
+    // Outils en ligne de commande exécutés par Node, hors bundle applicatif :
+    // CommonJS et sortie console y sont légitimes.
+    files: ['scripts/**/*.cjs'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-console': 'off',
+    },
+  },
 ];
 
 export default config;

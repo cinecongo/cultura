@@ -11,11 +11,12 @@
 | Étape | Objet | Statut | Preuve / blocage |
 |---|---|---|---|
 | P0.1 | Lire, reformuler, lister les ambiguïtés | `VERIFYING` | `QUESTIONS.md` rédigé + §0 réponses reçues |
-| P0.2 | Spike Next.js × Capacitor + ADR | `IN_PROGRESS` | `ADR-001` accepté ; spike à exécuter en P1.3 |
+| P0.2 | Spike Next.js × Capacitor + ADR | `VERIFYING` | `ADR-001` accepté ; spike exécuté en P1.3 (deux builds réels) |
 | P0.3 | Plan de design + revue anti-IA | `VERIFYING` | `DESIGN.md` v0.2 validé ; logos reçus |
 | P0.4 | `.env.example` + glossaire | `VERIFYING` | Fichiers créés + `.env.local` réel |
 | P1.1 | Dépôt et fichiers de pilotage | `VERIFYING` | Commit `9fba525` poussé sur `origin/main` |
-| P1.2 | Outillage (ESLint, TS, Vitest, scripts) | `VERIFYING` | lint 0 · typecheck 0 · 11/11 tests · audit 0 · secrets 0 |
+| P1.2 | Outillage (ESLint, TS, Vitest, scripts) | `VERIFYING` | lint 0 · typecheck 0 · 11/11 tests à l'époque · audit 0 · secrets 0 |
+| P1.3 | Squelette App Router + couche `platform` + deux builds | `VERIFYING` | `build:web` 0 · `build:mobile` 0 · `out/` réel · 28/28 tests · rendu mesuré à 360 px |
 | P2 → P10 | — | `TODO` | — |
 
 **Gate G0 : FRANCHIE le 2026-11-23** par validation humaine (« tu as le go »), avec **réserves** :
@@ -278,6 +279,56 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 
 ---
 
+## [P1.3] Squelette App Router, couche `platform`, deux builds
+
+- **Statut :** `VERIFYING`
+- **Skills/agents appelés :** `engineering:system-design` (substitut : ADR-001, déjà accepté) ; `frontend-design` (substitut : `DESIGN.md` §3 pour les tokens, revue `designer-critic` reportée à P1.5 car cette page n'a pas de design à juger). Date : 2026-11-24.
+- **Plan :**
+  1. `next.config.ts` lit `BUILD_TARGET` et bascule entre SSR (web) et export statique (mobile) — sans dupliquer le code applicatif.
+  2. Toute différence de cible vit dans `src/lib/platform/` (`target.ts`, `routes.ts`).
+  3. Une page minimale qui prouve le rendu, les tokens et la cible de build ; **aucun lien mort**.
+  4. Les deux builds doivent produire chacun leur artefact, et on le vérifie dans le HTML produit.
+- **Livrables :**
+  - `next.config.ts` — `output: 'export'` + `trailingSlash` + `images.unoptimized` **uniquement** si `BUILD_TARGET=mobile`
+  - `src/app/layout.tsx` — `lang="pt-AO"`, viewport, `themeColor` Papel
+  - `src/app/page.tsx` — squelette (marque, promesse, cible de build)
+  - `src/app/globals.css` — tokens `DESIGN.md` §3 via `@theme` Tailwind 4, focus visible, `prefers-reduced-motion`
+  - `src/lib/platform/target.ts` — `buildTarget`, `capabilities` (rendu serveur, coquille native, optimisation d'image, partage natif)
+  - `src/lib/platform/routes.ts` — routes localisées PT/FR/EN, slugs validés (anti-`../`)
+  - `src/lib/platform/index.ts` — surface publique unique
+  - `tests/routes.test.ts`, `tests/target.test.ts` — 17 tests
+  - `scripts/measure-render.cjs` — outil de preuve reproductible : sert `out/`, force le viewport via le protocole DevTools, mesure `scrollWidth` et la liste des éléments débordants, capture l'écran. **Échoue (exit 1) en cas de débordement horizontal.**
+- **Preuves (exécutées le 2026-11-24, état propre : `.next` et `out/` supprimés avant) :**
+
+| Commande | Résultat |
+|---|---|
+| `npm run build:web` | **exit 0**, 3 pages générées, HTML prerendu contient `web` |
+| `npm run build:mobile` | **exit 0**, export statique dans `out/` (`index.html`, `404.html`, `_next/`), HTML contient `mobile` |
+| `npm run lint` | **0 erreur, 0 avertissement** |
+| `npm run typecheck` | **0 erreur** |
+| `npm run test` | **28/28 tests passés** (3 fichiers) |
+| `npm run format:check` | **conforme** |
+| `npm run audit` | **0 vulnérabilité** |
+| `npm run secrets` | **0 fuite** (3 commits, 926 Ko) |
+| Contrôle d'encodage | **0 mojibake** sur 56 fichiers |
+| `node scripts/measure-render.cjs 360 720` | `scrollWidth = 360`, `overflowing = []`, `lang = "pt-AO"`, **exit 0** |
+
+- **Écarts corrigés en cours de route :**
+  1. **Isolation des builds.** Premier essai : `distDir` par cible. Mesure faite, puis découverte que **avec `output: 'export'`, Next écrit le site statique dans `distDir`** — donc `out/` disparaissait et Capacitor n'aurait plus de cible. Configuration annulée : `distDir` par défaut, `out/` respecté. Conséquence assumée et documentée dans `next.config.ts` : `.next` est partagé, **les deux builds ne doivent pas tourner en parallèle**.
+  2. **Faux positif de débordement.** Un premier capture d'écran (`--window-size=360,720`) montrait le texte coupé à droite. Mesure réelle via le protocole DevTools avec un viewport forcé à 360 px : `scrollWidth = 360`, `paragraph.right = 336`, liste des éléments débordants vide. C'était l'écart entre la taille de fenêtre et le viewport, pas un bug CSS. Le script de mesure sert désormais de preuve.
+  3. **`next-env.d.ts` était ignoré par Git.** Un clone neuf n'aurait pas pu passer `typecheck` avant un premier build (types CSS et JSX absents). Le fichier est désormais versionné.
+  4. Next a réécrit `tsconfig.json` pendant le build (`jsx: react-jsx`, ajout de `.next/types`). Changement accepté et versionné.
+  5. Liens de navigation retirés de la page de démarrage : ils pointaient vers des routes inexistantes. Un squelette ne doit pas prouver par un lien mort ; la navigation arrive avec l'i18n (P1.4).
+- **Verdict verifier :** en attente (auto-contrôle uniquement).
+- **Dette assumée :**
+  - **Archivo n'est pas embarquée** : la page rend avec la pile de repli. Les fichiers de police (licence OFL) arrivent en P1.5 avec la charte complète. `document.fonts.check('16px Archivo')` renvoie `true` même sans fichier : **ce n'est pas une preuve**, ne pas s'y fier.
+  - Les tokens non utilisés (`--color-terracotta`, `--color-ochre`, `--color-sand`, `--color-terra`) sont éliminés du CSS par Tailwind 4 : normal, ils reviendront avec les composants.
+  - Aucune route localisée n'existe encore (`/pt`, `/fr`, `/en`) : `routePath()` est prêt et testé, mais aucune page ne l'utilise. C'est P1.4.
+  - `out/` n'est pas encore consommé par Capacitor (P9), et le build web n'est pas encore déployé (O4, Vercel non connecté).
+  - Les screenshots ne couvrent que 360 px et 1280 px ; les états vides/erreur n'ont pas encore de sens sans données.
+
+---
+
 ## Décisions validées
 
 | Réf. | Décision | Statut | Date |
@@ -353,11 +404,10 @@ Réserves :
 
 ## Prochaine action
 
-1. **P1.3** : squelette Next.js App Router — `app/`, `next.config.ts` lisant `BUILD_TARGET`, couche `src/lib/platform/` (routes, images, stockage), deux builds qui passent.
-2. **P1.4** : i18n typé PT/FR/EN (ADR-002) sur 3 écrans.
-3. **P1.5** : tokens de design + en-tête + réglette horaire.
-4. Verdict indépendant `verifier` sur P0.1 → P1.2 (auto-contrôle seulement pour l'instant).
-5. En parallèle, côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email, relecteur PT-AO, master logo nettoyé.
+1. **P1.4** : i18n typé PT/FR/EN (ADR-002) — catalogues, `Intl` pour dates et nombres, segment `[locale]`, 3 écrans réels (`/pt`, `/fr`, `/en`) et navigation complète.
+2. **P1.5** : tokens de design complets + en-tête + réglette horaire (+ embarquement d'Archivo).
+3. Verdict indépendant `verifier` sur P0.1 → P1.3 (auto-contrôle seulement pour l'instant).
+4. En parallèle, côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email, relecteur PT-AO, master logo nettoyé, validation juridique M12.
 
 ---
 
