@@ -1,0 +1,32 @@
+#!/bin/sh
+# Hook pré-commit versionné (CULTURA_GUIDE_IA.md §P1.2).
+#
+# Deux barrières, dans cet ordre :
+#   1. ESLint — aucune erreur ne rentre dans l'historique.
+#   2. gitleaks sur l'index — aucun secret ne rentre dans l'historique.
+#
+# Le hook est appelé par Git via `core.hooksPath=.githooks`, réglé par
+# `npm run hooks:install` (déclenché par `prepare`, donc à chaque `npm install`).
+
+set -eu
+
+echo "[pre-commit] ESLint"
+npm run lint --silent
+
+GITLEAKS=""
+if command -v gitleaks >/dev/null 2>&1; then
+  GITLEAKS="gitleaks"
+elif [ -x "$HOME/.cultura/bin/gitleaks.exe" ]; then
+  GITLEAKS="$HOME/.cultura/bin/gitleaks.exe"
+elif [ -x "$USERPROFILE/.cultura/bin/gitleaks.exe" ]; then
+  GITLEAKS="$USERPROFILE/.cultura/bin/gitleaks.exe"
+fi
+
+if [ -z "$GITLEAKS" ]; then
+  echo "[pre-commit] gitleaks introuvable." >&2
+  echo "[pre-commit] Installer gitleaks (npm run secrets en dépend) puis relancer." >&2
+  exit 1
+fi
+
+echo "[pre-commit] gitleaks (index seulement)"
+"$GITLEAKS" git --staged --no-banner --redact

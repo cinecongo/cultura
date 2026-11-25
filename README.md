@@ -12,7 +12,7 @@
 | Données | Supabase (PostgreSQL, Auth, Storage, RLS) |
 | Hébergement | Vercel (web) |
 | Android | Capacitor — même base de code que le web |
-| État | **Fondations (P0/P1) — aucun code applicatif, Gate G0 en attente** |
+| État | **P1 — fondations techniques** (P1.1 → P1.5). Gate G0 franchie le 2026-11-23 ; aucune donnée métier, aucune migration |
 
 ---
 
@@ -38,19 +38,20 @@ Lire dans cet ordre. En cas de conflit, la priorité est celle du tableau.
 
 ## 2. Ce qui est construit à ce stade
 
-Cette étape livre **les fondations**, pas l'application :
+Gate G0 franchie le 2026-11-23. Les étapes P0 et P1 sont livrées :
 
-- cadrage P0.1 : reformulation, périmètre, ambiguïtés et questions ouvertes (`QUESTIONS.md`) ;
+- cadrage P0.1 et arbitrages (`QUESTIONS.md`) ;
 - architecture des deux cibles de build Next.js/Capacitor (`DECISIONS/ADR-001`) ;
-- choix i18n proposé (`DECISIONS/ADR-002`) ;
+- i18n typé PT-AO/FR/EN (`DECISIONS/ADR-002`) ;
 - modèle de sécurité, rôles et RLS (`DECISIONS/ADR-003`) ;
 - accès aux données, validation et pagination (`DECISIONS/ADR-004`) ;
 - plan de design complet et revue anti-« look IA » (`DESIGN.md`) ;
-- fichiers de pilotage : `AGENTS.md`, `PROGRESS.md`, `BACKLOG.md`, `.env.example`, `.gitignore` ;
-- définitions des 10 agents (`.claude/agents/`) ;
-- glossaire produit PT/FR/EN (`i18n/GLOSSAIRE.md`).
+- outillage P1.2 : ESLint, TypeScript strict, Prettier, Vitest, Playwright, gitleaks, hook pré-commit ;
+- squelette P1.3 : App Router, couche `platform`, `build:web` et `build:mobile` réels ;
+- i18n P1.4 : catalogues typés, `Intl` (fuseau `Africa/Luanda`), routes localisées, cookie de langue ;
+- design P1.5 : tokens, échelle typographique, Archivo auto-hébergée, en-tête, réglette horaire.
 
-**Aucun code applicatif, aucune migration, aucun composant** avant validation humaine de la Gate G0 (cahier + guide IA §9).
+**Aucune migration, aucune table, aucune donnée réelle** : la base arrive en P2/P3.
 
 ---
 
@@ -78,42 +79,69 @@ Cette étape livre **les fondations**, pas l'application :
 ├─ DECISIONS/                 ADR
 ├─ i18n/GLOSSAIRE.md          Vocabulaire PT/FR/EN
 ├─ docs/                      Notes transverses
-├─ public/                    Logo SVG, favicons, images fixes
+├─ public/
+│  ├─ brand/logo.svg          Logotype utilisé par l'en-tête
+│  └─ fonts/                  Archivo (WOFF2) + licence OFL
 ├─ src/
-│  ├─ app/[locale]/           Routes localisées (web + shell mobile)
+│  ├─ app/
+│  │  ├─ (default)/           Document par défaut : résolveur de langue, 404
+│  │  └─ (localized)/[locale] Pages PT/FR/EN (deux layouts racines)
 │  ├─ components/             UI sans logique métier
-│  ├─ features/               annonces, events, acteurs, agenda, admin, compte
 │  ├─ lib/
-│  │  ├─ data/                Accès Supabase (jamais dans un composant)
-│  │  ├─ i18n/                Catalogues et formatage
+│  │  ├─ i18n/                Catalogues, résolution, formatage
 │  │  ├─ platform/            Différences web / mobile
-│  │  ├─ supabase/            Clients serveur et navigateur
-│  │  └─ validation/          Schémas zod partagés
-│  └─ styles/                 Tokens CSS issus de DESIGN.md
-├─ supabase/
-│  ├─ migrations/             SQL versionné
-│  ├─ seed.sql                Données fictives
-│  └─ tests/                  Tests RLS
-├─ tests/                     unit, e2e (Playwright)
+│  │  └─ seo.ts, site.ts      Canonique, hreflang, noms propres
+│  └─ styles/                 (à venir : les tokens vivent dans globals.css)
+├─ supabase/                  (P2) migrations, seed, tests RLS
+├─ tests/
+│  ├─ e2e/                    Playwright
+│  └─ *.test.ts(x)            Vitest
+├─ scripts/                   Hook, mesure de rendu
+├─ .githooks/pre-commit       ESLint + gitleaks sur l'index
 ├─ android/                   Généré en P9
 └─ capacitor.config.ts
 ```
 
 ---
 
-## 5. Démarrage local (à compléter en P1)
-
-> Ces commandes seront disponibles à la fin de P1.5. Elles sont documentées ici pour cadrer l'objectif « installation en moins de 10 minutes ».
+## 5. Démarrage local
 
 ```bash
-git clone <repo>
+git clone https://github.com/cinecongo/cultura.git
 cd cultura
-cp .env.example .env.local     # renseigner les clés Supabase de dev
-npm ci
-npm run dev                    # http://localhost:3000/pt
+cp .env.example .env.local     # renseigner NEXT_PUBLIC_SITE_URL et les clés publiques Supabase
+npm ci                         # installe les dépendances et le hook pré-commit
+npm run dev                    # http://localhost:3000
 ```
 
-Commandes cibles : `dev`, `build:web`, `build:mobile`, `lint`, `typecheck`, `test`, `test:e2e`, `db:push`, `db:types`.
+**Le build exige `.env.local`.** `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL` et
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` sont validées au premier rendu : sans elles, `build:web`
+et `build:mobile` s'arrêtent avec un message qui ne cite que les noms manquants. Aucun
+secret (`service_role`) n'est nécessaire pour construire le site.
+
+Commandes disponibles :
+
+| Commande | Effet |
+|---|---|
+| `npm run dev` | Serveur de développement |
+| `npm run build:web` | Build SSR/ISR pour Vercel (`.next`) |
+| `npm run build:mobile` | Export statique pour Capacitor (`out/`) |
+| `npm run lint` / `typecheck` | ESLint / TypeScript strict |
+| `npm run test` | Vitest (unitaires) |
+| `npm run test:e2e` | Playwright (serveur de dev sur le port 4319) |
+| `npm run format:check` | Prettier |
+| `npm run measure` | Mesure le rendu de `out/` (360 px par défaut) |
+| `npm run secrets` | gitleaks sur l'historique Git |
+| `npm run audit` | `npm audit --audit-level=high` |
+| `npm run hooks:install` | Réinstalle `core.hooksPath=.githooks` |
+
+Notes :
+
+- Playwright utilise **Microsoft Edge installé** en local (`channel: 'msedge'`) ; en CI,
+  installer Chromium et retirer le canal.
+- Les deux builds partagent `.next` : ne jamais les lancer en parallèle.
+- `npm run secrets` suppose `gitleaks` dans le `PATH` (le hook le cherche aussi dans
+  `~/.cultura/bin`).
 
 ---
 

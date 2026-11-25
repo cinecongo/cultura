@@ -8,3 +8,5 @@ brand
 *.jpg
 *.png
 CULTURA_MEDIA_GUIDE_v1.0.docx
+# Fichier généré par Next à chaque build : ne pas formater, il serait réécrit.
+next-env.d.ts

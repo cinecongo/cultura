@@ -15,14 +15,43 @@
 | P0.3 | Plan de design + revue anti-IA | `VERIFYING` | `DESIGN.md` v0.2 validé ; logos reçus |
 | P0.4 | `.env.example` + glossaire | `VERIFYING` | Fichiers créés + `.env.local` réel |
 | P1.1 | Dépôt et fichiers de pilotage | `VERIFYING` | Commit `9fba525` poussé sur `origin/main` |
-| P1.2 | Outillage (ESLint, TS, Vitest, scripts) | `VERIFYING` | lint 0 · typecheck 0 · 11/11 tests à l'époque · audit 0 · secrets 0 |
-| P1.3 | Squelette App Router + couche `platform` + deux builds | `VERIFYING` | `build:web` 0 · `build:mobile` 0 · `out/` réel · 28/28 tests · rendu mesuré à 360 px |
-| P1.4 | i18n typé PT-AO/FR/EN + 2 écrans + résolveur | `VERIFYING` | 7 pages · 82/82 tests · 0 lien mort sur 48 · typecheck casse si une clé manque |
+| P1.2 | Outillage (ESLint, TS, Vitest, scripts) | `IN_PROGRESS` | **REFUSÉ le 2026-11-24** (hook + Playwright absents) → corrections faites, re-vérification à demander |
+| P1.3 | Squelette App Router + couche `platform` + deux builds | `DONE` | **VALIDÉ par le `verifier` le 2026-11-24** |
+| P1.4 | i18n typé PT-AO/FR/EN + 2 écrans + résolveur | `DONE` | **VALIDÉ par le `verifier` le 2026-11-24** ; corrections N1–N3, N8, N12, N18, N19 appliquées |
+| P1.5 | Design system : tokens, Archivo, en-tête, réglette | `VERIFYING` | 95 tests · 15 e2e · 2 builds · 8 pages mesurées à 360 et 1120 px |
 | P2 → P10 | — | `TODO` | — |
 
 **Gate G0 : FRANCHIE le 2026-11-23** par validation humaine (« tu as le go »), avec **réserves** :
 Q7 (relecteur PT-AO non nommé), O4–O11 (Vercel, domaine, email, Turnstile, Sentry, package Android, CI), M12 (validation juridique).
 Ces réserves bloquent la **mise en production**, pas le squelette technique.
+
+---
+
+## Verdict indépendant du 2026-11-24 (`verifier`)
+
+| Étape | Verdict | Suite donnée |
+|---|---|---|
+| P1.3 | **VALIDÉ** | Statut passé à `DONE` |
+| P1.4 | **VALIDÉ** | Statut passé à `DONE` ; corrections non bloquantes appliquées |
+| P1.2 | **REFUSÉ** | Deux manques bloquants : **aucun hook pré-commit** et **aucun test Playwright / script `test:e2e`** |
+
+**Traitement des constats (le rapport complet n'est pas archivé dans le dépôt) :**
+
+| Réf. | Constat | Traitement |
+|---|---|---|
+| N1–N3 | Garde-fous de copie contournables | Corrigé : placeholders malformés rejetés, expression JSX et `metadata.title`/`description` analysés, termes interdits complétés ; test de contrôle négatif ajouté |
+| N4 | Écarts au `DESIGN.md` (marque, hiérarchie, états vides) | Traité en P1.5 : en-tête, logotype, échelle typographique, réglette, états vides en `h2` |
+| N8 | État vide sans `h2` | Corrigé sur « Hoje » et « Semana » |
+| N11 | Routes web `/fr` vs export `/fr/` | **Ouvert** → `QUESTIONS.md` §9 (N11), à trancher en P8 |
+| N12 | Imports qui contournaient `@/lib/platform` | Corrigé (en-tête, pages, résolveur) |
+| N14 | Deux images IA versionnées sans mention | Documentées dans `DESIGN.md` §15 comme références de travail, jamais servies |
+| N15 | `README.md` obsolète | Corrigé : état réel, structure, commandes, dépendance à `.env.local` |
+| N16 | Le build dépend de variables d'environnement | Assumé et documenté (`README.md` §5) : URL publique + clés publiques Supabase, aucun secret |
+| N17 | Budget JS non prouvé | Mesuré : **136,2 Ko gzip** de JavaScript moderne (limite 150 Ko), CSS 3,6 Ko |
+| N18 | `aria-current` absent | Corrigé : `page` sur la navigation, `true` sur la langue active |
+| N19 | Cookie de langue sans `Secure` en HTTPS | Corrigé : attribut ajouté quand `location.protocol === 'https:'` |
+
+Les corrections de P1.2 et P1.5 sont dans le même lot de commits que ce journal ; la **re-vérification indépendante** reste à demander avant de clore P1.2 et P1.5.
 
 ---
 
@@ -220,7 +249,7 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 
 ## [P1.2] Outillage
 
-- **Statut :** `VERIFYING`
+- **Statut :** `IN_PROGRESS` — refusé le 2026-11-24, corrections faites, re-vérification à demander
 - **Skills/agents appelés :** `qa-tester` (substitut : écriture des tests par le constructeur, à revalider), `security-reviewer` (substitut : gitleaks + audit npm). Date : 2026-11-24.
 - **Plan :**
   1. `package.json` avec scripts reproductibles, sans dépendance superflue.
@@ -272,9 +301,25 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
   3. ESLint signalait `no-html-link-for-pages` sans dossier `pages` → règle désactivée (App Router uniquement) et export nommé pour supprimer l'avertissement.
   4. Un test « ne divulgue pas la valeur » passait pour une mauvaise raison (valeur assez longue pour être valide) → valeur raccourcie pour déclencher réellement l'erreur.
   5. `gitleaks` déclenchait `docx2txt.exe: command not found` via le textconv Git sur le `.docx` → `.gitattributes` marque les binaires.
-- **Verdict verifier :** en attente (auto-contrôle uniquement).
+- **Verdict verifier (2026-11-24) :** **REFUSÉ** — deux manques bloquants : aucun hook pré-commit, aucun test Playwright ni script `test:e2e`.
+- **Corrections apportées après le refus (2026-11-25) :**
+  - `.githooks/pre-commit` : ESLint puis `gitleaks git --staged --no-banner --redact` ; `core.hooksPath=.githooks` posé par `scripts/install-hooks.cjs` et le script `prepare`.
+  - `playwright.config.ts` + `tests/e2e/smoke.e2e.ts` : 15 tests (langues, résolution, cookie, 404, débordement 360 px, lien d'évitement, en-tête, réglette, police).
+  - `.gitattributes` : `.githooks/*` et `*.sh` en LF ; `next-env.d.ts` exclu de Prettier (fichier généré).
+  - `scripts/measure-render.cjs` : ignore les enfants d'une zone qui défile horizontalement (la réglette mobile), pour ne mesurer que les débordements de page.
+- **Preuve du hook (2026-11-25) :** fichier temporaire `preuve-hook-secret.txt` contenant une clé AWS factice, `git add` puis `git commit` →
+  ```
+  [pre-commit] ESLint
+  [pre-commit] gitleaks (index seulement)
+  WRN leaks found: 1
+  COMMIT_EXIT=1
+  ```
+  Le dernier commit est resté `2d0d99a` : **le secret n'est pas entré dans l'historique**. Fichier supprimé et désindexé ensuite.
+- **Preuves P1.2 après corrections (2026-11-25) :**
+  - `npm run test` → **95/95 tests** (8 fichiers) ; `npm run test:e2e` → **15/15** ; `npm run lint` → 0 ; `npm run typecheck` → 0 ; `npm run format:check` → conforme.
+  - `npm run secrets` → **no leaks found** (5 commits, 1,02 Mo) ; `npm run audit` → **0 vulnérabilité**.
 - **Dette assumée :**
-  - `npm run build:web` et `build:mobile` **échouent encore** : il n'y a pas encore de dossier `app/` (P1.3). C'est attendu.
+  - Les deux builds, alors inexistants, sont **opérationnels depuis P1.3** (`build:web` et `build:mobile` exit 0).
   - Aucune CI GitHub Actions (O11) : le workflow viendra quand `gh` ou l'interface web sera disponible.
   - `typescript-eslint` 8.74 et `eslint` 10 ont produit des avertissements de pair-dépendance à l'installation ; le lint fonctionne (0 erreur), mais la combinaison est à surveiller à la prochaine montée de version.
 
@@ -320,9 +365,9 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
   3. **`next-env.d.ts` était ignoré par Git.** Un clone neuf n'aurait pas pu passer `typecheck` avant un premier build (types CSS et JSX absents). Le fichier est désormais versionné.
   4. Next a réécrit `tsconfig.json` pendant le build (`jsx: react-jsx`, ajout de `.next/types`). Changement accepté et versionné.
   5. Liens de navigation retirés de la page de démarrage : ils pointaient vers des routes inexistantes. Un squelette ne doit pas prouver par un lien mort ; la navigation arrive avec l'i18n (P1.4).
-- **Verdict verifier :** en attente (auto-contrôle uniquement).
+- **Verdict verifier (2026-11-24) :** **VALIDÉ**. Les constats non bloquants qui touchaient cette étape (N12 notamment) ont été corrigés avec P1.5.
 - **Dette assumée :**
-  - **Archivo n'est pas embarquée** : la page rend avec la pile de repli. Les fichiers de police (licence OFL) arrivent en P1.5 avec la charte complète. `document.fonts.check('16px Archivo')` renvoie `true` même sans fichier : **ce n'est pas une preuve**, ne pas s'y fier.
+  - **Archivo n'est pas embarquée** : la page rend avec la pile de repli. Les fichiers de police (licence OFL) arrivent en P1.5 avec la charte complète. `document.fonts.check('16px Archivo')` renvoie `true` même sans fichier : **ce n'est pas une preuve**, ne pas s'y fier. **Levée en P1.5** : WOFF2 auto-hébergés, preuve e2e `document.fonts.ready` + `check`. 
   - Les tokens non utilisés (`--color-terracotta`, `--color-ochre`, `--color-sand`, `--color-terra`) sont éliminés du CSS par Tailwind 4 : normal, ils reviendront avec les composants.
   - Aucune route localisée n'existe encore (`/pt`, `/fr`, `/en`) : `routePath()` est prêt et testé, mais aucune page ne l'utilise. C'est P1.4.
   - `out/` n'est pas encore consommé par Capacitor (P9), et le build web n'est pas encore déployé (O4, Vercel non connecté).
@@ -381,15 +426,71 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
   4. **`Intl` et l'heure angolaise.** `Intl` rend « 18:00 » dans les trois langues ; le glossaire exige « 18h00 » (PT) et « 18 h 00 » (FR). L'heure est donc composée à partir de `formatToParts` (chiffres fournis par `Intl`), jamais par concaténation de chaînes formatées à la main.
   5. **Plage de dates anglaise.** `en-GB` insère une espace fine (U+2009) autour du tiret : « 24 – 30 November 2026 ». Le test attend la sortie réelle du moteur, pas une approximation.
   6. **`react-hooks/immutability`** refusait l'écriture de `document.cookie` dans le corps du composant : l'effet de bord est sorti dans une fonction de module.
-- **Verdict verifier :** en attente (auto-contrôle uniquement).
+- **Verdict verifier (2026-11-24) :** **VALIDÉ**, avec constats non bloquants. N1–N3 (garde-fous), N8 (`h2` des états vides), N12 (imports `platform`), N18 (`aria-current`), N19 (cookie `Secure`) corrigés le 2026-11-25.
 - **Dette assumée :**
-  - **Archivo toujours non embarquée** : le rendu utilise la pile de repli. P1.5.
+  - **Archivo toujours non embarquée** : le rendu utilise la pile de repli. P1.5. **Levée en P1.5.**
   - **`canonical` et `hreflang` pointent sur `http://localhost:3000`** (valeur de `NEXT_PUBLIC_SITE_URL` en local). À corriger dès que le domaine existe (O5).
   - **`tp()` n'est encore appelé par aucun écran** : sans données, un compteur n'aurait rien à compter. Testé, il entrera en service en P3 avec les événements.
   - **Les formateurs de date, heure et Kz ne sont pas encore affichés** : les écrans n'ont ni date ni prix tant qu'il n'y a pas de données. Prouvés par tests, ils seront utilisés par la réglette (P1.5) et les fiches (P3).
   - **Le cookie est écrit côté navigateur**, pas par un serveur : l'export statique n'a pas de serveur. Conséquence assumée et documentée dans le résolveur.
   - **Les textes PT attendent la relecture PT-AO (Q7)** ; les choix « agente cultural », « Gosto », « Favorito » restent ouverts.
   - La 404 affiche les trois langues au lieu d'une seule : une 404 localisée suppose un segment de langue connu, ce qui n'est pas le cas d'une adresse inexistante.
+
+---
+
+## [P1.5] Design system : tokens, Archivo, en-tête, réglette
+
+- **Statut :** `VERIFYING`
+- **Skills/agents appelés :** `frontend-design`, `web-design-system` (indisponibles — substitut : `DESIGN.md` §3–§7) ; `designer-critic` (substitut : revue anti-« look IA » §14 + captures 360/1120 px). Date : 2026-11-25.
+- **Plan :**
+  1. Poser l'échelle typographique (`.type-*`), les filets et les états de focus comme tokens uniques.
+  2. Embarquer Archivo (WOFF2 variables, OFL) au lieu de la pile de repli.
+  3. Construire l'en-tête : logotype image, navigation desktop, item actif, sélecteur de langue.
+  4. Construire la réglette horaire sur l'aplat charbon, avec `prefers-reduced-motion`.
+  5. Prouver le rendu réel à 360 px et 1120 px, sans débordement.
+- **Livrables :**
+  - `public/fonts/archivo-latin.woff2` (94 988 o), `archivo-latin-ext.woff2` (88 964 o), `OFL.txt` (4 388 o) ; `@font-face` + préchargement dans les layouts.
+  - `public/brand/logo.svg` — recadrage dérivé du fichier fourni (viewBox `232 243 878 268`, 6 tracés, 34 868 o, 0 référence crème).
+  - `src/app/globals.css` — `.type-display` → `.type-micro`, `.tabular`, `.skip-link`, `.nav-link`, `.language-link`, `.ruler-*`, `prefers-reduced-motion`.
+  - `src/components/site-header.tsx` — logotype 24/28 px, navigation `Hoje · Semana`, filet terracotta 3 px sous l'item actif.
+  - `src/components/language-switcher.tsx` — trois liens, `aria-current`, cookie `Secure` en HTTPS.
+  - `src/components/time-ruler.tsx` — axe 12h–02h, graduation par heure, libellé toutes les 2 h, points ocre 4 px, trait au-delà de 3 événements par heure, fenêtre élargie si besoin.
+  - `src/app/(localized)/[locale]/page.tsx` — aplat charbon (eyebrow, `h1`, chapeau, réglette), état vide sur papier.
+  - `tests/time-ruler.test.tsx` — 6 tests de géométrie réelle.
+  - `tests/e2e/smoke.e2e.ts` — 3 tests design en plus (en-tête, réglette, police).
+- **Preuves (exécutées le 2026-11-25, `.next` et `out/` supprimés avant) :**
+
+| Commande | Résultat |
+|---|---|
+| `npm run build:web` | **exit 0** — 9 pages générées (`/`, 404, 3 langues, 3 semaines) |
+| `npm run build:mobile` | **exit 0** — 10 fichiers HTML dans `out/` |
+| `npm run lint` | **0 erreur, 0 avertissement** |
+| `npm run typecheck` | **0 erreur** |
+| `npm run test` | **95/95 tests** (8 fichiers) |
+| `npm run test:e2e` | **15/15 tests** (Edge, 41 s) |
+| `npm run format:check` | **conforme** |
+| `npm run audit` | **0 vulnérabilité** |
+| `npm run secrets` | **no leaks found** (5 commits, 1,02 Mo) |
+| Crawl de `out/` | **10 pages, 54 liens internes, 0 lien mort** |
+| Mesure 360 px | **8 URL**, `scrollWidth = 360`, `overflowing = []` |
+| Mesure 1120 px | **8 URL**, `scrollWidth = 1120`, `overflowing = []` |
+| Budget JS | **136,2 Ko gzip** moderne (limite 150), + 38,7 Ko `nomodule` ; CSS 3,6 Ko |
+| Police | `document.fonts.check('16px Archivo')` = `true` après `document.fonts.ready` (e2e) |
+| Encodage | **0 mojibake** sur 73 fichiers texte |
+
+- **Écarts corrigés en cours de route :**
+  1. **SVG mal formé.** Le premier recadrage laissait le `</svg>` d'origine et en ajoutait un second. Détecté par validation XML (`svg-close = 2`) : corrigé, fichier valide à 6 tracés.
+  2. **Faux positif de débordement sur mobile.** La réglette défile volontairement dans un conteneur `overflow-x: auto` ; le script de mesure signalait ses enfants comme débordants. Il ignore désormais les descendants d'une zone défilante, tout en continuant à mesurer `document.scrollWidth`.
+  3. **Prettier contre `next-env.d.ts`.** Next réécrit ce fichier à chaque build ; il est exclu de Prettier au lieu d'être reformaté en boucle.
+  4. **Libellés français larges.** « 12 h 00 » prend plus de place que « 12h00 » ; la réglette garde `min-width: 560px` et défile sur mobile plutôt que de comprimer les heures.
+  5. **Réglette visible sans événement.** L'axe est affiché (fenêtre 12h–02h) mais entièrement `aria-hidden` tant qu'il n'y a aucun point : il n'annonce rien d'utile aux lecteurs d'écran.
+- **Dette assumée :**
+  - **Barre de navigation mobile absente** : les sections « Atores » et « Cidades » n'existent pas encore ; afficher quatre items dont deux morts serait un faux bouton. Elle arrive avec les sections (P3/P4).
+  - **Recherche et compte absents** de l'en-tête, pour la même raison.
+  - **Date du jour non affichée** : elle serait figée au build dans l'export mobile → question N20 (`QUESTIONS.md` §9), à traiter avec les données.
+  - **Logotype provisoire** : recadrage dérivé, couleurs d'origine non normalisées (`DESIGN.md` §15) ; le master nettoyé reste attendu.
+  - **Points de la réglette non visibles en production** faute d'événements : la géométrie est prouvée par 6 tests unitaires et une planche de contrôle rendue en navigateur.
+- **Verdict verifier :** en attente.
 
 ---
 
@@ -454,7 +555,7 @@ Réserves :
 
 | Risque | Impact | Mitigation |
 |---|---|---|
-| Logo vectorisé avec bruit et couleurs non normalisées | Moyen | Nettoyage avant P1.5 ; repli typographique en attendant |
+| Logo vectorisé avec bruit et couleurs non normalisées | Moyen | Recadré et détouré en P1.5 ; couleurs et bruit restants à corriger sur le master avant production (`DESIGN.md` §15) |
 | Deux modes de routage web/mobile | Élevé | Couche `routes`, test e2e, spike P1.3 |
 | Ambiguïté `events` vs `annonces.format='evenement'` | Élevé | Q6 tranché ; correction T2 en P2.1 |
 | Doublons de likes sur événements (NULL) | Moyen | Correction T1 en P2.1 |
@@ -468,11 +569,11 @@ Réserves :
 
 ## Prochaine action
 
-1. **P1.5** : tokens de design complets + en-tête + réglette horaire (+ embarquement d'Archivo, en attente du master logo propre).
-2. **P2** : schéma Supabase (migrations, RLS, `moderation_log`), revue `db-security` / `security-reviewer`.
-3. Verdict indépendant `verifier` sur P0.1 → P1.4 (auto-contrôle seulement pour l'instant).
-4. En parallèle, côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12).
+1. **Re-vérification indépendante** de P1.2 (corrections du refus) et de P1.5, par l'agent `verifier` — aucun `DONE` sans son verdict.
+2. **P2** : schéma Supabase en **local d'abord** (Docker), migrations et tests RLS ; **rien n'est poussé sur `cultura-dev` avant validation explicite du schéma**. Revue `db-security` / `security-reviewer`.
+3. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12).
+4. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
 
 ---
 
-*Dernière mise à jour : 2026-11-24.*
+*Dernière mise à jour : 2026-11-25.*

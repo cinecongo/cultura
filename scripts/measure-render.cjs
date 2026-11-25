@@ -68,6 +68,7 @@ const server = http.createServer((req, res) => {
   const urlPath = decodeURIComponent((req.url ?? '/').split('?')[0]);
   let file = path.join(ROOT, urlPath);
   if (urlPath.endsWith('/')) file = path.join(file, 'index.html');
+  if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
   if (!fs.existsSync(file) && fs.existsSync(`${file}.html`)) file = `${file}.html`;
   if (!fs.existsSync(file) || !file.startsWith(ROOT)) {
     res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' });
@@ -126,6 +127,18 @@ const EXPRESSION = `(() => {
     tag: el.tagName,
     text: el.textContent.trim().slice(0, 60),
   }));
+  // Un élément dans une zone qui défile horizontalement (la réglette sur
+  // mobile) dépasse le viewport par conception : ce n'est pas un débordement
+  // de page. On ne mesure que ce qui pousse réellement le document.
+  const inScroller = (el) => {
+    for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+      const overflowX = getComputedStyle(parent).overflowX;
+      if ((overflowX === 'auto' || overflowX === 'scroll') && parent.scrollWidth > parent.clientWidth) {
+        return true;
+      }
+    }
+    return false;
+  };
   return {
     viewport: { width: window.innerWidth, height: window.innerHeight },
     // URL réelle après chargement : prouve une éventuelle redirection.
@@ -137,9 +150,17 @@ const EXPRESSION = `(() => {
     main: box(document.querySelector('main')),
     h1: box(document.querySelector('h1')),
     paragraphStyle: style(document.querySelector('main p')),
+    font: {
+      body: getComputedStyle(document.body).fontFamily,
+      check: document.fonts.check('16px Archivo'),
+      loaded: [...document.fonts].map(function (face) {
+        return face.family + ' ' + face.weight + ' ' + face.status;
+      }),
+    },
     // Éléments qui dépassent le viewport : un débordement horizontal est un bug.
     overflowing: [...document.querySelectorAll('body *')]
       .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 0.5)
+      .filter((el) => !inScroller(el))
       .slice(0, 10)
       .map((el) => ({
         tag: el.tagName.toLowerCase(),
@@ -148,6 +169,8 @@ const EXPRESSION = `(() => {
       })),
   };
 })()`;
+
+let cleanup = () => {};
 
 (async () => {
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -164,8 +187,21 @@ const EXPRESSION = `(() => {
     `--remote-debugging-port=${PORT}`,
     'about:blank',
   ]);
+  cleanup = () => {
+    try {
+      edge.kill();
+    } catch {
+      /* déjà arrêté */
+    }
+    try {
+      server.close();
+    } catch {
+      /* déjà fermé */
+    }
+  };
   edge.on('error', (error) => {
     console.error(`Impossible de lancer le navigateur : ${error.message}`);
+    cleanup();
     process.exit(1);
   });
 
@@ -258,5 +294,6 @@ const EXPRESSION = `(() => {
   process.exit(failed ? 1 : 0);
 })().catch((error) => {
   console.error(error);
+  cleanup();
   process.exit(1);
 });
