@@ -88,9 +88,7 @@ function timeParts(locale: Locale, date: Date): { hour: string; minute: string }
 }
 
 /** « 18h00 » · « 18 h 00 » · « 18:00 » */
-export function formatTime(locale: Locale, date: Date): string {
-  const { hour, minute } = timeParts(locale, date);
-
+function composeClock(locale: Locale, hour: string, minute: string): string {
   switch (locale) {
     case 'pt':
       return `${hour}h${minute}`;
@@ -99,6 +97,32 @@ export function formatTime(locale: Locale, date: Date): string {
     case 'en':
       return `${hour}:${minute}`;
   }
+}
+
+/** « 18h00 » · « 18 h 00 » · « 18:00 » */
+export function formatTime(locale: Locale, date: Date): string {
+  const { hour, minute } = timeParts(locale, date);
+  return composeClock(locale, hour, minute);
+}
+
+/**
+ * Heure pleine pour les graduations de la réglette : « 12h00 » · « 12 h 00 » ·
+ * « 12:00 ». Les heures 24 à 29 représentent l'après-minuit (02h00 = 26).
+ */
+export function formatHour(locale: Locale, hour: number): string {
+  if (!Number.isInteger(hour) || hour < 0 || hour > 29) {
+    throw new Error('Une graduation est une heure entière entre 0 et 29.');
+  }
+  return composeClock(locale, String(hour % 24).padStart(2, '0'), '00');
+}
+
+/**
+ * Heure locale de Luanda, en fraction d'heure (18h30 → 18,5). Sert à placer un
+ * événement sur la réglette sans jamais lire l'heure de la machine.
+ */
+export function luandaHour(date: Date): number {
+  const { hour, minute } = timeParts('en', date);
+  return Number(hour) + Number(minute) / 60;
 }
 
 /** « 1 500 » · « 1 500 » (espace fine) · « 1,500 » */

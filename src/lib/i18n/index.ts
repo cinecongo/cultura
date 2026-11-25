@@ -88,7 +88,15 @@ export function tp(
   return interpolate(template, { count: formatNumber(locale, count), ...vars });
 }
 
-export { formatDate, formatDateRange, formatKz, formatNumber, formatTime } from './format';
+export {
+  formatDate,
+  formatDateRange,
+  formatHour,
+  formatKz,
+  formatNumber,
+  formatTime,
+  luandaHour,
+} from './format';
 export {
   defaultLocale,
   htmlLangFor,

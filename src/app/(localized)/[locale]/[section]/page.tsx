@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 
 import { SiteHeader } from '@/components/site-header';
 import { isLocale, locales, t } from '@/lib/i18n';
-import { routePath, segmentsFor } from '@/lib/platform/routes';
+import { routePath, segmentsFor } from '@/lib/platform';
 import { pageMetadata } from '@/lib/seo';
 
 type PageProps = { params: Promise<{ locale: string; section: string }> };
@@ -39,32 +39,29 @@ export default async function WeekPage({ params }: PageProps) {
   if (!isLocale(locale) || section !== segmentsFor(locale).week) notFound();
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[720px] flex-col gap-10 px-6 pb-16">
+    <>
       <SiteHeader locale={locale} route={{ name: 'week' }} />
 
-      <section className="flex flex-col gap-4">
-        <p className="text-[11px] font-medium tracking-[0.02em] text-stone">
-          {t(locale, 'week.eyebrow')}
-        </p>
-        <h1 className="text-4xl leading-[1.05] font-extrabold text-ink sm:text-5xl">
-          {t(locale, 'week.title')}
-        </h1>
-        <p className="max-w-[52ch] text-base leading-relaxed text-stone">
-          {t(locale, 'week.lead')}
-        </p>
-      </section>
+      <main
+        id="conteudo"
+        className="mx-auto flex w-full max-w-[680px] flex-col gap-8 px-4 pt-8 pb-16 md:px-6 md:pt-12"
+      >
+        <section className="flex flex-col gap-3">
+          <p className="type-meta text-stone">{t(locale, 'week.eyebrow')}</p>
+          <h1 className="type-h1 text-ink">{t(locale, 'week.title')}</h1>
+          <p className="type-body-lg max-w-[64ch] text-stone">{t(locale, 'week.lead')}</p>
+        </section>
 
-      <section className="flex flex-col gap-4 border border-line p-6">
-        <p className="max-w-[52ch] text-base leading-relaxed text-ink">
-          {t(locale, 'week.empty.title')}
-        </p>
-        <Link
-          href={routePath(locale, { name: 'today' })}
-          className="self-start text-sm font-medium text-ink underline decoration-terracotta decoration-2 underline-offset-4 hover:text-terracotta-text"
-        >
-          {t(locale, 'week.action')}
-        </Link>
-      </section>
-    </main>
+        <section className="flex flex-col gap-4 border-t border-line pt-6">
+          <h2 className="type-h2 max-w-[64ch] text-ink">{t(locale, 'week.empty.title')}</h2>
+          <Link
+            href={routePath(locale, { name: 'today' })}
+            className="type-body self-start font-medium text-ink underline decoration-terracotta decoration-2 underline-offset-4 hover:text-terracotta-text"
+          >
+            {t(locale, 'week.action')}
+          </Link>
+        </section>
+      </main>
+    </>
   );
 }

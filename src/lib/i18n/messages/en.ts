@@ -11,6 +11,14 @@ export const en = {
   'nav.week': 'This week',
 
   'language.label': 'Language',
+  'language.choose': 'Choose a language',
+  'language.pt': 'Português',
+  'language.fr': 'Français',
+  'language.en': 'English',
+
+  'a11y.skip': 'Skip to content',
+
+  'ruler.label': "Today's programme",
 
   'home.eyebrow': "Angola's cultural agenda",
   'home.title': 'Today',
@@ -29,6 +37,7 @@ export const en = {
   },
 
   'notfound.title': 'Page not found',
+  'notfound.lead': 'This page does not exist or has moved.',
 
   'meta.home.title': 'Today — Cultura',
   'meta.home.description': "Angola's cultural agenda: what's on today, city by city.",

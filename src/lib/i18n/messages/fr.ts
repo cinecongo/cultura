@@ -11,6 +11,14 @@ export const fr = {
   'nav.week': 'Cette semaine',
 
   'language.label': 'Langue',
+  'language.choose': 'Choisir la langue',
+  'language.pt': 'Português',
+  'language.fr': 'Français',
+  'language.en': 'English',
+
+  'a11y.skip': 'Aller au contenu',
+
+  'ruler.label': 'Programme du jour',
 
   'home.eyebrow': "Agenda culturel de l'Angola",
   'home.title': "Aujourd'hui",
@@ -29,6 +37,7 @@ export const fr = {
   },
 
   'notfound.title': 'Page introuvable',
+  'notfound.lead': "Cette page n'existe pas ou a changé d'adresse.",
 
   'meta.home.title': "Aujourd'hui — Cultura",
   'meta.home.description':

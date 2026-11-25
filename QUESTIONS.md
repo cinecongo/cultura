@@ -168,4 +168,13 @@ Dès réception, je mets à jour `PROGRESS.md`, je fige les ADR acceptés, puis 
 
 ---
 
-*Questions ouvertes au 23 novembre 2026.*
+## 9. Questions ouvertes après la vérification (2026-11-25)
+
+| Réf. | Question | Recommandation | Impact |
+|---|---|---|---|
+| N11 | **URL web et mobile.** Le build web sert `/fr` et `/fr/semaine` ; l'export mobile (`trailingSlash: true`) sert `/fr/` et `/fr/semaine/`. ADR-001 promet « mêmes routes ». | Passer `trailingSlash: true` sur **les deux** cibles, ou assumer l'écart et le documenter dans ADR-001. À trancher en P8, quand les URL publiques seront gelées (O5). | Canonique, `hreflang`, partage WhatsApp |
+| N20 | **Date du jour sur l'export mobile.** L'export statique fige tout ce qui est calculé au build : afficher « Segunda, 24 de novembro » dans `out/` donnerait une date fausse dès le lendemain. | Calculer la date côté client (`Africa/Luanda`) après hydratation, avec un emplacement réservé stable ; ne rien afficher dans le HTML statique. À implémenter avec les données (P3). | Exactitude de la page « Hoje » dans l'APK |
+
+---
+
+*Questions ouvertes au 25 novembre 2026.*

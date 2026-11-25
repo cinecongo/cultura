@@ -560,23 +560,27 @@ Règles : hiérarchie fixe (date → ville → heures → mention Cultura discr�
 
 - [x] Logo vectoriel : `logo.svg` (symbole + mot + signature, horizontal) et `Icone.svg` (symbole seul, carré 1024 × 1024) — **versionnés le 2026-11-24**, contrôlés (aucun script, aucune référence externe).
 - [x] Références raster de la marque : `logo.jpg`, `Icone.jpg`.
+- [x] Planches de référence générées : `Gemini_Generated_Image_8x7ju88x7ju88x7j.jpg` (1344 × 756, planche d'identité : symbole, marque, palette) et `Gemini_Generated_Image_wcjx46wcjx46wcjx.jpg` (1248 × 832). **Conservées pour la traçabilité, jamais servies par le site** : ce sont des images de travail, pas des actifs de production.
 
-**Qualité des fichiers reçus — à corriger avant P1.5 :**
+**Qualité des fichiers reçus — état au 2026-11-25 :**
 
-| Problème | Détail | Correction |
-|---|---|---|
-| Bruit de vectorisation | Les deux SVG contiennent des dizaines de micro-traces beiges issues de la compression du JPEG d'origine | Nettoyer ou retracer depuis un PNG propre à 2048 px |
-| Couleurs non normalisées | Terracotta `#c95136` / `#c94e32`, ocre `#d89b2d` / `#d99a28`, papier `#f8f7f2` / `#fdfdfa`, noir `#0e0e0b` / `#1d1d1d` | Ramener à `#C84B31`, `#D99B26`, `#FBF9F5`, `#1A1A1A` |
-| Marges vides | Le dessin n'occupe qu'une partie du `viewBox` (beaucoup de blanc autour) | Recadrer à la boîte englobante exacte |
-| Poids | 189 Ko et 146 Ko pour un logotype | Viser < 20 Ko par fichier après nettoyage |
-| Variantes absentes | Pas de version verticale, pas de version claire sur fond sombre, pas de monochrome | Décliner depuis le master nettoyé |
+| Problème | Détail | Correction | État |
+|---|---|---|---|
+| Bruit de vectorisation | Les deux SVG contiennent des dizaines de micro-traces beiges issues de la compression du JPEG d'origine | Nettoyer ou retracer depuis un PNG propre à 2048 px | **ouvert** — non corrigé en P1.5 |
+| Couleurs non normalisées | Terracotta `#c95136` / `#c94e32`, ocre `#d89b2d` / `#d99a28`, papier `#f8f7f2` / `#fdfdfa`, noir `#0e0e0b` / `#1d1d1d` | Ramener à `#C84B31`, `#D99B26`, `#FBF9F5`, `#1A1A1A` | **ouvert** — les tracés fournis sont conservés tels quels |
+| Marges vides | Le dessin n'occupe qu'une partie du `viewBox` (beaucoup de blanc autour) | Recadrer à la boîte englobante exacte | **fait** — `public/brand/logo.svg`, viewBox `232 243 878 268` |
+| Fond crème | Trois aplats de fond (`#f9f9f4`, `#f8f7f2`, `#fdfdfa`) masquaient le dessin sur tout autre fond que le papier | Retirer les aplats de fond | **fait** — 3 chemins retirés, 0 référence crème restante |
+| Poids | 189 Ko et 146 Ko pour un logotype | Viser < 20 Ko par fichier après nettoyage | **partiel** — 34,9 Ko après recadrage (6 tracés) |
+| Variantes absentes | Pas de version verticale, pas de version claire sur fond sombre, pas de monochrome | Décliner depuis le master nettoyé | **ouvert** |
+
+`public/brand/logo.svg` est un **recadrage dérivé** du fichier fourni, pas un redessin : mêmes tracés, boîte englobante mesurée dans un navigateur (x 238,16 · y 249 · 865,84 × 256), marge de 6 unités, fond crème retiré. Il est **provisoire** tant que le master nettoyé n'existe pas ; il ne doit pas servir de source pour les visuels réseaux sociaux.
 
 **Encore à fournir :**
 
 - [ ] Master propre : SVG recadré, couleurs normalisées, sans bruit (ou AI/EPS source).
 - [ ] Variantes : verticale, claire sur charbon, monochrome (pour l'APK et les tampons).
 - [ ] Favicon 32 px, icône 180 px, icône maskable 512 px, image de partage OG 1200 × 630 (gabarit).
-- [ ] Confirmation de la licence de la police (Archivo, SIL OFL) et des fichiers source.
+- [x] Police Archivo (SIL OFL) : fichiers WOFF2 variables auto-hébergés dans `public/fonts/` avec `OFL.txt` — 2026-11-25.
 - [x] Validation de la palette et du concept (§1) par l'humain — 2026-11-23.
 - [x] Validation des wireframes des 4 écrans clés — 2026-11-23.
 - [ ] Relecture du vocabulaire PT-AO (`i18n/GLOSSAIRE.md`).
@@ -585,4 +589,4 @@ Règles : hiérarchie fixe (date → ville → heures → mention Cultura discr�
 
 ---
 
-*Fin du plan de design v0.1 — à valider avant le premier composant.*
+*Fin du plan de design v0.2 — validée ; les composants P1.5 en découlent.*

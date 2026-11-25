@@ -2,7 +2,7 @@ import type { Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-import { htmlLangFor, isLocale, locales } from '@/lib/i18n/locale';
+import { htmlLangFor, isLocale, locales, t } from '@/lib/i18n';
 
 import '../../globals.css';
 
@@ -37,7 +37,19 @@ export default async function LocaleLayout({
 
   return (
     <html lang={htmlLangFor(locale)}>
-      <body>{children}</body>
+      <body>
+        <link
+          rel="preload"
+          href="/fonts/archivo-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <a href="#conteudo" className="skip-link">
+          {t(locale, 'a11y.skip')}
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

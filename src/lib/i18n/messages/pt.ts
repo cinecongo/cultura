@@ -19,6 +19,14 @@ export const pt = {
   'nav.week': 'Esta semana',
 
   'language.label': 'Idioma',
+  'language.choose': 'Escolher idioma',
+  'language.pt': 'Português',
+  'language.fr': 'Français',
+  'language.en': 'English',
+
+  'a11y.skip': 'Saltar para o conteúdo',
+
+  'ruler.label': 'Programa do dia',
 
   'home.eyebrow': 'Agenda cultural de Angola',
   'home.title': 'Hoje',
@@ -37,6 +45,7 @@ export const pt = {
   } satisfies PluralMessage,
 
   'notfound.title': 'Página não encontrada',
+  'notfound.lead': 'Esta página não existe ou mudou de endereço.',
 
   'meta.home.title': 'Hoje — Cultura',
   'meta.home.description': 'A agenda cultural de Angola: o que acontece hoje, cidade a cidade.',

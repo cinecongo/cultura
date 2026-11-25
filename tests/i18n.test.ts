@@ -49,6 +49,24 @@ describe('catalogues', () => {
     }
   });
 
+  it('n’écrit que des variables simples, entre accolades et sans espace', () => {
+    const violations: string[] = [];
+
+    for (const locale of locales) {
+      for (const [key, value] of Object.entries(catalogs[locale])) {
+        const texts = typeof value === 'string' ? [value] : [value.one, value.other];
+        for (const text of texts) {
+          for (const match of text.matchAll(/\{([^}]*)\}/g)) {
+            const name = match[1] ?? '';
+            if (!/^\w+$/.test(name)) violations.push(`${locale}.${key} : « ${match[0]} »`);
+          }
+        }
+      }
+    }
+
+    expect(violations, violations.join('\n')).toEqual([]);
+  });
+
   it('ne contient ni chaîne vide ni espace superflu', () => {
     for (const locale of locales) {
       for (const [key, value] of Object.entries(catalogs[locale])) {

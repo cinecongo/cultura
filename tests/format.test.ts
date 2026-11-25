@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDate, formatDateRange, formatKz, formatNumber, formatTime } from '@/lib/i18n/format';
+import {
+  formatDate,
+  formatDateRange,
+  formatHour,
+  formatKz,
+  formatNumber,
+  formatTime,
+  luandaHour,
+} from '@/lib/i18n/format';
 
 /** 24 novembre 2026, 17:00 UTC = 18:00 à Luanda (UTC+1). */
 const EVENING = new Date(Date.UTC(2026, 10, 24, 17, 0, 0));
@@ -83,5 +91,36 @@ describe('formatKz', () => {
 
   it('accepte zéro', () => {
     expect(formatKz('pt', 0)).toBe('0\u00A0Kz');
+  });
+});
+
+describe('formatHour', () => {
+  it('écrit une heure pleine dans les trois langues', () => {
+    expect(formatHour('pt', 12)).toBe('12h00');
+    expect(formatHour('fr', 12)).toBe('12 h 00');
+    expect(formatHour('en', 12)).toBe('12:00');
+  });
+
+  it('met deux chiffres sur l’axe, y compris après minuit', () => {
+    expect(formatHour('pt', 26)).toBe('02h00');
+    expect(formatHour('en', 24)).toBe('00:00');
+    expect(formatHour('fr', 9)).toBe('09 h 00');
+  });
+
+  it('refuse une heure hors de l’axe', () => {
+    expect(() => formatHour('pt', 30)).toThrow(/entre 0 et 29/);
+    expect(() => formatHour('pt', 12.5)).toThrow(/entière/);
+    expect(() => formatHour('pt', -1)).toThrow(/entre 0 et 29/);
+  });
+});
+
+describe('luandaHour', () => {
+  it('donne l’heure de Luanda en fraction, jamais celle de la machine', () => {
+    expect(luandaHour(new Date(Date.UTC(2026, 10, 24, 17, 30)))).toBe(18.5);
+    expect(luandaHour(new Date(Date.UTC(2026, 10, 24, 8, 5)))).toBeCloseTo(9.0833, 3);
+  });
+
+  it('passe au lendemain après 23 h UTC', () => {
+    expect(luandaHour(new Date(Date.UTC(2026, 10, 24, 23, 30)))).toBe(0.5);
   });
 });

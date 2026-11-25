@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
-import { defaultLocale, htmlLangFor } from '@/lib/i18n/locale';
+import { defaultLocale, htmlLangFor, t } from '@/lib/i18n';
 import { brandName } from '@/lib/site';
 
 import '../globals.css';
 
 /**
  * Document par défaut, pour les adresses qui n'ont pas encore de langue :
- * le résolveur `/` et la page introuvable. La langue du document est celle du
- * repli (portugais), et ces pages ne sont pas indexées.
+ * le résolveur `/` et la page introuvable globale. La langue du document est
+ * celle du repli (portugais), et ces pages ne sont pas indexées.
  */
 export const metadata: Metadata = {
   title: brandName,
@@ -25,7 +25,19 @@ export const viewport: Viewport = {
 export default function DefaultLayout({ children }: { children: ReactNode }) {
   return (
     <html lang={htmlLangFor(defaultLocale)}>
-      <body>{children}</body>
+      <body>
+        <link
+          rel="preload"
+          href="/fonts/archivo-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <a href="#conteudo" className="skip-link">
+          {t(defaultLocale, 'a11y.skip')}
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

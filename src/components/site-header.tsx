@@ -1,20 +1,32 @@
 import Link from 'next/link';
 
 import { t, type Locale } from '@/lib/i18n';
-import { routePath, type Route } from '@/lib/platform/routes';
+import { routePath, type Route } from '@/lib/platform';
+import { brandName } from '@/lib/site';
 
 import { LanguageSwitcher } from './language-switcher';
 
 /**
- * En-tête commun (structure seulement : la mise en forme définitive est
- * l'objet de P1.5). Le logotype n'y figure pas encore : il doit être une image
- * propre, pas un texte recomposé (DESIGN.md §7.1.1).
+ * En-tête commun (DESIGN.md §7.1).
+ *
+ * Le logotype est **une image**, jamais recomposé en HTML (DESIGN.md §7.1.1).
+ * `public/brand/logo.svg` est un recadrage du fichier fourni : mêmes tracés,
+ * boîte englobante mesurée, fond crème retiré. Le master nettoyé (couleurs
+ * normalisées, bruit retiré) reste attendu — voir DESIGN.md §15.
+ *
+ * Les entrées absentes (recherche, compte, Atores, Cidades) ne sont pas
+ * affichées : un lien vers une page qui n'existe pas serait un faux bouton.
  */
 export type SiteHeaderProps = {
   readonly locale: Locale;
   /** Route courante, pour que le sélecteur reste sur la même page. */
   readonly route: Route;
 };
+
+const NAV_ITEMS = [
+  { route: { name: 'today' }, key: 'nav.today' },
+  { route: { name: 'week' }, key: 'nav.week' },
+] as const;
 
 export function SiteHeader({ locale, route }: SiteHeaderProps) {
   const targets = {
@@ -24,31 +36,41 @@ export function SiteHeader({ locale, route }: SiteHeaderProps) {
   } satisfies Record<Locale, string>;
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-4 border-b border-line py-4">
-      <nav aria-label={t(locale, 'nav.label')}>
-        <ul className="flex items-center gap-6">
-          <li>
-            <Link
-              href={routePath(locale, { name: 'today' })}
-              aria-current={route.name === 'today' ? 'page' : undefined}
-              className="text-sm font-medium text-ink underline decoration-line decoration-1 underline-offset-4 hover:decoration-terracotta aria-[current=page]:decoration-terracotta aria-[current=page]:decoration-2"
-            >
-              {t(locale, 'nav.today')}
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={routePath(locale, { name: 'week' })}
-              aria-current={route.name === 'week' ? 'page' : undefined}
-              className="text-sm font-medium text-ink underline decoration-line decoration-1 underline-offset-4 hover:decoration-terracotta aria-[current=page]:decoration-terracotta aria-[current=page]:decoration-2"
-            >
-              {t(locale, 'nav.week')}
-            </Link>
-          </li>
-        </ul>
-      </nav>
+    <header className="border-b border-line">
+      <div className="mx-auto flex h-14 w-full max-w-[1120px] items-center justify-between gap-6 px-4 md:h-16 md:px-6">
+        <Link href={routePath(locale, { name: 'today' })} className="shrink-0">
+          {/* SVG maîtrisé et versionné : aucune optimisation d'image nécessaire,
+              et `dangerouslyAllowSVG` reste inutile. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/logo.svg"
+            alt={brandName}
+            width={92}
+            height={28}
+            className="h-6 w-auto md:h-7"
+          />
+        </Link>
 
-      <LanguageSwitcher locale={locale} label={t(locale, 'language.label')} targets={targets} />
+        <div className="flex items-center gap-6 md:gap-8">
+          <nav aria-label={t(locale, 'nav.label')} className="hidden md:block">
+            <ul className="flex items-center gap-6">
+              {NAV_ITEMS.map((item) => (
+                <li key={item.key}>
+                  <Link
+                    href={routePath(locale, item.route)}
+                    aria-current={route.name === item.route.name ? 'page' : undefined}
+                    className="nav-link"
+                  >
+                    {t(locale, item.key)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <LanguageSwitcher locale={locale} label={t(locale, 'language.label')} targets={targets} />
+        </div>
+      </div>
     </header>
   );
 }

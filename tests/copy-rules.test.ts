@@ -12,8 +12,11 @@ import { pt } from '@/lib/i18n/messages/pt';
  * Garde-fous éditoriaux et structurels (ADR-002 §1 et §6, glossaire §8).
  *
  * Le scan des composants passe par l'AST TypeScript, pas par des expressions
- * régulières : une regex sur le fichier confond le code et le JSX et produit
- * des faux positifs (déjà observé sur un type générique suivi d'un `return`).
+ * régulières : une regex sur le fichier confond le code et le JSX.
+ *
+ * Cas couverts : texte JSX, expression JSX (`{'texte'}`), attributs lus par un
+ * humain (y compris `aria-label={'…'}`, `title={`…`}`), et `title` /
+ * `description` des objets `metadata` (texte visible dans l'onglet et en SEO).
  */
 
 const ROOT = process.cwd();
@@ -50,25 +53,59 @@ function parse(file: string): ts.SourceFile {
   );
 }
 
-function literalTexts(file: string): string[] {
+const literalValue = (node: ts.Node): string | null => {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+  return null;
+};
+
+/** Textes réellement visibles dans un composant, avec leur emplacement. */
+function visibleTexts(file: string): { where: string; text: string }[] {
   const source = parse(file);
-  const found: string[] = [];
+  const found: { where: string; text: string }[] = [];
 
   const visit = (node: ts.Node): void => {
+    // Enfant JSX littéral : <p>Bonjour</p>
     if (ts.isJsxText(node)) {
       const text = node.text.trim();
-      if (HAS_LETTERS.test(text)) found.push(`texte JSX « ${text} »`);
+      if (HAS_LETTERS.test(text)) found.push({ where: 'texte JSX', text });
     }
 
+    // Enfant JSX en expression littérale : <p>{'Bonjour'}</p>
+    if (ts.isJsxExpression(node) && node.expression) {
+      const text = literalValue(node.expression)?.trim();
+      if (text && HAS_LETTERS.test(text)) found.push({ where: 'expression JSX', text });
+    }
+
+    // Attributs lisibles par un humain, y compris en expression littérale.
     if (
       ts.isJsxAttribute(node) &&
       ts.isIdentifier(node.name) &&
-      VISIBLE_ATTRIBUTES.has(node.name.text) &&
-      node.initializer !== undefined &&
-      ts.isStringLiteral(node.initializer)
+      VISIBLE_ATTRIBUTES.has(node.name.text)
     ) {
-      const text = node.initializer.text.trim();
-      if (HAS_LETTERS.test(text)) found.push(`attribut ${node.name.text} « ${text} »`);
+      const initializer = node.initializer;
+      const value = initializer
+        ? ts.isStringLiteral(initializer)
+          ? initializer.text
+          : ts.isJsxExpression(initializer) && initializer.expression
+            ? literalValue(initializer.expression)
+            : null
+        : null;
+      const text = value?.trim();
+      if (text && HAS_LETTERS.test(text)) {
+        found.push({ where: `attribut ${node.name.text}`, text });
+      }
+    }
+
+    // `metadata = { title: '…', description: '…' }` : visible en SEO.
+    if (
+      ts.isPropertyAssignment(node) &&
+      ts.isIdentifier(node.name) &&
+      (node.name.text === 'title' || node.name.text === 'description')
+    ) {
+      const text = literalValue(node.initializer)?.trim();
+      if (text && HAS_LETTERS.test(text)) {
+        found.push({ where: `metadata.${node.name.text}`, text });
+      }
     }
 
     ts.forEachChild(node, visit);
@@ -91,7 +128,10 @@ function hardcodedHrefs(file: string): string[] {
       ts.isStringLiteral(node.initializer) &&
       node.initializer.text.startsWith('/')
     ) {
-      found.push(`href="${node.initializer.text}"`);
+      const href = node.initializer.text;
+      // Les fichiers statiques (police, image, icône) ne sont pas des routes :
+      // eux seuls ont une extension.
+      if (!/\/[^/]+\.[a-z0-9]+$/i.test(href)) found.push(`href="${href}"`);
     }
     ts.forEachChild(node, visit);
   };
@@ -103,7 +143,7 @@ function hardcodedHrefs(file: string): string[] {
 describe('textes d’interface', () => {
   it('ne contient aucun texte visible écrit en dur dans un composant', () => {
     const violations = tsxFiles.flatMap((file) =>
-      literalTexts(file).map((detail) => `${relative(ROOT, file)} : ${detail}`),
+      visibleTexts(file).map(({ where, text }) => `${relative(ROOT, file)} : ${where} « ${text} »`),
     );
 
     expect(violations, violations.join('\n')).toEqual([]);
@@ -118,25 +158,28 @@ describe('textes d’interface', () => {
   });
 
   it('détecte réellement un texte en dur (le test précédent n’est pas vide)', () => {
-    const fake = join(ROOT, 'tests', '__fixture__.tsx');
     const source = ts.createSourceFile(
-      fake,
-      'export const X = () => <p aria-label="Libellé">Bonjour</p>;',
+      join(ROOT, 'tests', '__fixture__.tsx'),
+      `export const metadata = { title: 'Accueil' };\n` +
+        `export const X = () => <p aria-label={'Libellé'} title={\`Titre\`}>Bonjour {'monde'}</p>;`,
       ts.ScriptTarget.Latest,
       true,
       ts.ScriptKind.TSX,
     );
-    const found: string[] = [];
 
+    const found: string[] = [];
     const visit = (node: ts.Node): void => {
-      if (ts.isJsxText(node) && HAS_LETTERS.test(node.text.trim())) {
-        found.push(node.text.trim());
+      if (ts.isJsxText(node) && HAS_LETTERS.test(node.text.trim())) found.push(node.text.trim());
+      if (ts.isJsxExpression(node) && node.expression) {
+        const text = literalValue(node.expression)?.trim();
+        if (text && HAS_LETTERS.test(text)) found.push(text);
       }
       ts.forEachChild(node, visit);
     };
     visit(source);
 
-    expect(found).toEqual(['Bonjour']);
+    expect(found).toHaveLength(4);
+    expect(found).toEqual(expect.arrayContaining(['Bonjour', 'monde', 'Libellé', 'Titre']));
   });
 });
 
@@ -154,23 +197,48 @@ describe('termes interdits', () => {
     { pattern: /\bseguidor(es)?\b/iu, instead: 'non applicable au MVP' },
     { pattern: /\bfollowers?\b/iu, instead: 'non applicable au MVP' },
     { pattern: /\babonnés\b/iu, instead: 'non applicable au MVP' },
+    { pattern: /\bapplication(s)?\b/iu, instead: 'a Cultura' },
+    { pattern: /\bstor(y|ies)\b/iu, instead: 'non applicable au MVP' },
+    { pattern: /\breels?\b/iu, instead: 'non applicable au MVP' },
+    { pattern: /\bscraping\b/iu, instead: 'non applicable au MVP' },
   ];
 
   const catalogs = { pt, fr, en } as const;
 
+  const catalogueTexts = Object.entries(catalogs).flatMap(([locale, catalog]) =>
+    Object.entries(catalog).flatMap(([key, value]) =>
+      (typeof value === 'string' ? [value] : [value.one, value.other]).map((text) => ({
+        origin: `${locale}.${key}`,
+        text,
+      })),
+    ),
+  );
+
+  const jsxTexts = tsxFiles.flatMap((file) =>
+    visibleTexts(file).map(({ where, text }) => ({
+      origin: `${relative(ROOT, file)} (${where})`,
+      text,
+    })),
+  );
+
   it('n’apparaît dans aucun catalogue', () => {
     const violations: string[] = [];
 
-    for (const [locale, catalog] of Object.entries(catalogs)) {
-      for (const [key, value] of Object.entries(catalog)) {
-        const texts = typeof value === 'string' ? [value] : [value.one, value.other];
-        for (const text of texts) {
-          for (const { pattern, instead } of FORBIDDEN) {
-            if (pattern.test(text)) {
-              violations.push(`${locale}.${key} : « ${text} » → utiliser ${instead}`);
-            }
-          }
-        }
+    for (const { origin, text } of catalogueTexts) {
+      for (const { pattern, instead } of FORBIDDEN) {
+        if (pattern.test(text)) violations.push(`${origin} : « ${text} » → utiliser ${instead}`);
+      }
+    }
+
+    expect(violations, violations.join('\n')).toEqual([]);
+  });
+
+  it('n’apparaît dans aucun texte visible d’un composant', () => {
+    const violations: string[] = [];
+
+    for (const { origin, text } of jsxTexts) {
+      for (const { pattern, instead } of FORBIDDEN) {
+        if (pattern.test(text)) violations.push(`${origin} : « ${text} » → utiliser ${instead}`);
       }
     }
 

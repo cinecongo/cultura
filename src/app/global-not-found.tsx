@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { defaultLocale, htmlLangFor, locales, t } from '@/lib/i18n';
-import { routePath } from '@/lib/platform/routes';
+import { defaultLocale, htmlLangFor, locales, t, type Locale, type StringKey } from '@/lib/i18n';
+import { routePath } from '@/lib/platform';
 import { brandName } from '@/lib/site';
 
 import './globals.css';
@@ -15,38 +15,57 @@ import './globals.css';
  * via `experimental.globalNotFound`. Vérifié dans `out/404.html` : `<html>`,
  * `<body>` et `lang` sont présents.
  *
- * Aucune langue n'est résolue ici : la page affiche les trois, dans l'ordre de
- * priorité du produit, avec un lien vers « Aujourd'hui » dans chacune.
+ * Le document est en portugais (langue de repli) : un seul `h1`, puis les trois
+ * langues proposées en clair. Aucune langue n'est devinée pour une adresse qui
+ * n'existe pas.
  */
 export const metadata: Metadata = {
   title: brandName,
   robots: { index: false, follow: true },
 };
 
+const LANGUAGE_NAME_KEYS = {
+  pt: 'language.pt',
+  fr: 'language.fr',
+  en: 'language.en',
+} as const satisfies Record<Locale, StringKey>;
+
 export default function GlobalNotFound() {
   return (
     <html lang={htmlLangFor(defaultLocale)}>
-      <body className="bg-paper text-ink">
-        <main className="mx-auto flex max-w-[720px] flex-col gap-8 px-6 py-16">
-          <p className="text-xs font-medium tracking-[0.08em] text-stone">404</p>
+      <body>
+        <link
+          rel="preload"
+          href="/fonts/archivo-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <a href="#conteudo" className="skip-link">
+          {t(defaultLocale, 'a11y.skip')}
+        </a>
 
-          <ul className="flex flex-col gap-6">
-            {locales.map((locale) => (
-              <li key={locale} className="border-t border-line pt-4">
-                <p lang={htmlLangFor(locale)} className="text-lg font-semibold text-ink">
-                  {t(locale, 'notfound.title')}
-                </p>
-                <Link
-                  href={routePath(locale, { name: 'today' })}
-                  hrefLang={htmlLangFor(locale)}
-                  lang={htmlLangFor(locale)}
-                  className="text-sm text-stone underline decoration-line decoration-1 underline-offset-4 hover:text-terracotta-text"
-                >
-                  {t(locale, 'nav.today')}
-                </Link>
-              </li>
-            ))}
-          </ul>
+        <main id="conteudo" className="mx-auto flex max-w-[680px] flex-col gap-6 px-6 py-16">
+          <p className="type-meta text-stone">404</p>
+          <h1 className="type-h1 text-ink">{t(defaultLocale, 'notfound.title')}</h1>
+          <p className="type-body text-stone">{t(defaultLocale, 'notfound.lead')}</p>
+
+          <nav aria-label={t(defaultLocale, 'language.choose')} className="mt-4">
+            <ul className="flex flex-col gap-3 border-t border-line pt-6">
+              {locales.map((locale) => (
+                <li key={locale}>
+                  <Link
+                    href={routePath(locale, { name: 'today' })}
+                    hrefLang={locale}
+                    lang={htmlLangFor(locale)}
+                    className="type-body text-ink underline decoration-line decoration-1 underline-offset-4 hover:decoration-terracotta"
+                  >
+                    {t(defaultLocale, LANGUAGE_NAME_KEYS[locale])} · {t(locale, 'nav.today')}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </main>
       </body>
     </html>
