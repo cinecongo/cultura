@@ -48,7 +48,7 @@
 ├── tests/
 │   ├── e2e/                    smoke.e2e.ts (langues, cookie, 404, débordement, design)
 │   └── *.test.ts(x)            Vitest (i18n, format, ruler, copy-rules, locale, env, platform…)
-├── scripts/                    install-hooks, measure-render, serve-out
+├── scripts/                    install-hooks, measure-render
 ├── .githooks/pre-commit, .gitattributes, .gitleaks.toml
 ├── playwright.config.ts, vitest.config.mts, next.config.ts, tsconfig.json, tailwind/postcss/eslint/prettier configs
 └── package.json, capacitor.config.ts, .env.example

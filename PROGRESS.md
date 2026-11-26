@@ -18,7 +18,7 @@
 | P1.2 | Outillage (ESLint, TS, Vitest, scripts) | `DONE` | **VALIDÉ par le `verifier` le 2026-11-25** (hook bloquant et Playwright prouvés) |
 | P1.3 | Squelette App Router + couche `platform` + deux builds | `DONE` | **VALIDÉ par le `verifier` le 2026-11-24** |
 | P1.4 | i18n typé PT-AO/FR/EN + 2 écrans + résolveur | `DONE` | **VALIDÉ par le `verifier` le 2026-11-24** ; corrections N1–N3, N8, N12, N18, N19 appliquées |
-| P1.5 | Design system : tokens, Archivo, en-tête, réglette | `VERIFYING` | Refusé le 2026-11-25 (B1 cibles < 44 px, B2 navigation mobile absente) → corrigé le 2026-11-26 ; **nouveau verdict à demander** |
+| P1.5 | Design system : tokens, Archivo, en-tête, réglette | `DONE` | **VALIDÉ par le `verifier` indépendant le 2026-11-26** (B1/B2 corrigés et prouvés ; N37–N39 traités) |
 | P2 → P10 | — | `TODO` | — |
 
 **Gate G0 : FRANCHIE le 2026-11-23** par validation humaine (« tu as le go »), avec **réserves** :
@@ -90,7 +90,7 @@ Les corrections de P1.2 et P1.5 sont dans le même lot de commits que ce journal
 | N35 | Codes `PT`/`FR`/`EN` hors catalogues | Documenté : ce sont des identifiants de langue, pas des textes traduits (`DESIGN.md` §7.1, commentaire de `locale.ts`) |
 | N36 | `test:e2e` ne couvre que `next dev` | Assumé et écrit : l'export `out/` est couvert par le crawl de liens et les 16 mesures de rendu, pas par les interactions |
 
-Les corrections ci-dessus sont dans le lot de commits qui suit ce journal ; **le nouveau verdict indépendant de P1.5 reste à demander**.
+Les corrections ci-dessus sont dans le lot de commits qui suit ce journal ; le nouveau verdict indépendant de P1.5 est intervenu le 2026-11-26 : **VALIDÉ**.
 
 ---
 
@@ -288,7 +288,7 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 
 ## [P1.2] Outillage
 
-- **Statut :** `IN_PROGRESS` — refusé le 2026-11-24, corrections faites, re-vérification à demander
+- **Statut :** `DONE` — refusé le 2026-11-24, corrections faites ; verdict **VALIDÉ** le 2026-11-25, **confirmé le 2026-11-26** par un second round de contrôle
 - **Skills/agents appelés :** `qa-tester` (substitut : écriture des tests par le constructeur, à revalider), `security-reviewer` (substitut : gitleaks + audit npm). Date : 2026-11-24.
 - **Plan :**
   1. `package.json` avec scripts reproductibles, sans dépendance superflue.
@@ -350,7 +350,8 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
   - Faux secret AWS dans `preuve-hook-secret.txt` → `leaks found: 1`, `COMMIT_EXIT=1`, HEAD inchangé (`502f9c8`).
   - Erreur ESLint volontaire dans `preuve-hook-lint.ts` (`any`) → `1 error`, `COMMIT_EXIT=1`, HEAD inchangé.
   - Dans les deux cas, fichier désindexé et supprimé ; **rien n'est entré dans l'historique**.
-- **Verdict verifier (2026-11-25) :** **VALIDÉ** — hook réellement bloquant (deux preuves indépendantes), Playwright réel, toutes les portes passent. Statut passé à `DONE`.
+- **Verdict verifier (2026-11-25) :** **VALIDÉ** — hook réellement bloquant (deux preuves indépendantes), Playwright réel, toutes les portes passent. Statut passé à `DONE`. **Confirmé le 2026-11-26** par le verdict indépendant (preuves reprises : refus ESLint avec `any` réel, refus gitleaks, mode `100755`, HEAD inchangé, cleanup complet).
+- **Second round de contrôle du verdict (2026-11-26) :** **confirmé — VALIDÉ**. Aucun régressif ; statut `DONE` maintenu.
 - **Preuves P1.2 après corrections (2026-11-26) :**
   - `npm run test` → **97/97 tests** (8 fichiers) ; `npm run test:e2e` → **17/17** ; `npm run lint` → 0 ; `npm run typecheck` → 0 ; `npm run format:check` → conforme.
   - `npm run secrets` → **no leaks found** (lockfile désormais scanné — N30) ; `npm run audit` → **0 vulnérabilité**.
@@ -477,7 +478,7 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 
 ## [P1.5] Design system : tokens, Archivo, en-tête, réglette
 
-- **Statut :** `VERIFYING` — refusé le 2026-11-25 (B1, B2), corrigé le 2026-11-26, **nouveau verdict à demander**
+- **Statut :** `DONE` — **Verdict indépendant du 2026-11-26 (`verifier`) : VALIDÉ** (B1 et B2 corrigés et prouvés par mesures ; N37–N39 traités)
 - **Skills/agents appelés :** `frontend-design`, `web-design-system` (indisponibles — substitut : `DESIGN.md` §3–§7) ; `designer-critic` (substitut : revue anti-« look IA » §14 + captures 360/1120 px versionnées dans `docs/captures/`). Date : 2026-11-25, reprise 2026-11-26.
 - **Plan :**
   1. Poser l'échelle typographique (`.type-*`), les filets et les états de focus comme tokens uniques.
@@ -539,9 +540,28 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
   - **Points de la réglette non visibles en production** faute d'événements : la géométrie est prouvée par 6 tests unitaires et une planche de contrôle rendue en navigateur.
   - **État vide de la semaine sans dates** (N25) : dépend de N20.
   - **`test:e2e` ne couvre pas l'export** (N36) : `out/` est couvert par le crawl et les 16 mesures.
-- **Verdict verifier (2026-11-25) :** **REFUSÉ** — B1 (cibles tactiles < 44 px) et B2 (navigation mobile absente). Corrections ci-dessus ; **nouveau verdict indépendant à demander**.
+- **Verdict indépendant du 2026-11-26 (`verifier`) :** **VALIDÉ** — B1 (cibles tactiles < 44 px) et B2 (navigation mobile absente) corrigés et **prouvés par mesures** (cibles ≥ 44 × 44 px mesurées via `boundingBox` à 360 px et 1120 px sur `/fr` et `/fr/semaine` ; barre basse mobile 56 px + `env(safe-area-inset-bottom)`, deux entrées fonctionnelles, item actif, contenu non masqué en fin de page, disparition à 1120 px). Constats N37–N39 traités.
 
 ---
+
+## Synthèse — Verdicts indépendants P1.2 / P1.5 (2026-11-26)
+
+| Étape | Verdict | Date | Suite |
+|---|---|---|---|
+| P1.2 | **VALIDÉ** — confirmé | 2026-11-25 (hook), reprise et confirmation le 2026-11-26 | Hook pre-commit opérationnel : refus ESLint (annotation `any` réelle → 2 erreurs → `COMMIT_EXIT=1`), refus gitleaks (fake `sk-proj-…` → `leaks found: 1` → `COMMIT_EXIT=1`), mode `100755`, HEAD inchangé, cleanup complet. Playwright : 17/17. |
+| P1.5 | **VALIDÉ** — indépendant du 2026-11-26 | 2026-11-26 | Refus du 2026-11-25 levé : **B1** (cibles tactiles ≥ 44 × 44 px) et **B2** (barre basse mobile 56 px + `env(safe-area-inset-bottom)`, deux entrées fonctionnelles, item actif, contenu non masqué, disparition à 1120 px) corrigés et **prouvés par mesures** (`boundingBox` ≥ 44 × 44 px à 360 px et 1120 px sur `/fr` et `/fr/semaine`). |
+
+### Bloquants : aucun
+
+- **B1** (cibles tactiles < 44 px) et **B2** (navigation mobile absente) : **résolus** par le commit `7682575` ; mesures indépendantes → plus aucun bloquant pour P1.5.
+
+### Constats N37–N39 et traitements
+
+| Réf. | Constat | Traitement |
+|---|---|---|
+| N37 | `docs/PROJECT_MAP.md` (§1) mentionne `scripts/serve-out`, inexistant. | **Corrigé** : mention retirée de la carte (arborescence alignée sur l'existant). |
+| N38 | Fakes AWS (`AKIA…`) non détectés par gitleaks ; preuve de la barrière faite avec un fake `sk-proj-…`. | **Traitement** : preuve reproductible avec un fake `sk-proj-…` ; hook gitleaks validé sur ce motif → constat clos. |
+| N39 | Barre basse : bounding box 57 px (56 px contenu + bordure 1 px). | **Classé mineur** (conforme au cahier) ; aucun traitement requis. |
 
 ## Décisions validées
 
@@ -618,7 +638,7 @@ Réserves :
 
 ## Prochaine action
 
-1. **Verdict indépendant de P1.5** après les corrections B1/B2 et N21–N36 — aucun `DONE` sans son verdict. P1.2 est `DONE` depuis le verdict du 2026-11-25.
+1. **Verdict indépendant de P1.5** — obtenu le 2026-11-26 : **VALIDÉ** (B1/B2 corrigés et prouvés par mesures ; N37–N39 traités). P1.2 est `DONE` depuis le verdict du 2026-11-25, confirmé le 2026-11-26.
 2. **P2** : schéma Supabase en **local d'abord** (Docker), migrations et tests RLS ; **rien n'est poussé sur `cultura-dev` avant validation explicite du schéma**. Revue `db-security` / `security-reviewer`.
 3. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12).
 4. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
