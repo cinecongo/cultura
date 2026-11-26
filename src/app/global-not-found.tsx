@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { preload } from 'react-dom';
 
 import { defaultLocale, htmlLangFor, locales, t, type Locale, type StringKey } from '@/lib/i18n';
 import { routePath } from '@/lib/platform';
@@ -31,16 +32,15 @@ const LANGUAGE_NAME_KEYS = {
 } as const satisfies Record<Locale, StringKey>;
 
 export default function GlobalNotFound() {
+  preload('/fonts/archivo-latin.woff2', {
+    as: 'font',
+    type: 'font/woff2',
+    crossOrigin: 'anonymous',
+  });
+
   return (
     <html lang={htmlLangFor(defaultLocale)}>
       <body>
-        <link
-          rel="preload"
-          href="/fonts/archivo-latin.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
         <a href="#conteudo" className="skip-link">
           {t(defaultLocale, 'a11y.skip')}
         </a>

@@ -28,14 +28,15 @@ export type LanguageSwitcherProps = {
  * corps du composant : la navigation reste confiée au lien.
  */
 function rememberLocale(next: Locale): void {
-  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-  document.cookie = `${serializeLocaleCookie(next)}${secure}`;
+  document.cookie = serializeLocaleCookie(next, {
+    secure: window.location.protocol === 'https:',
+  });
 }
 
 export function LanguageSwitcher({ locale, label, targets }: LanguageSwitcherProps) {
   return (
     <nav aria-label={label}>
-      <ul className="flex items-center gap-4">
+      <ul className="flex items-center gap-1">
         {locales.map((item) => (
           <li key={item}>
             <Link

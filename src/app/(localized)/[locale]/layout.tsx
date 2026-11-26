@@ -1,6 +1,7 @@
 import type { Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { preload } from 'react-dom';
 
 import { htmlLangFor, isLocale, locales, t } from '@/lib/i18n';
 
@@ -35,16 +36,15 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
+  preload('/fonts/archivo-latin.woff2', {
+    as: 'font',
+    type: 'font/woff2',
+    crossOrigin: 'anonymous',
+  });
+
   return (
     <html lang={htmlLangFor(locale)}>
       <body>
-        <link
-          rel="preload"
-          href="/fonts/archivo-latin.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
         <a href="#conteudo" className="skip-link">
           {t(locale, 'a11y.skip')}
         </a>

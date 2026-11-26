@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { MobileNav } from '@/components/mobile-nav';
 import { SiteHeader } from '@/components/site-header';
 import { isLocale, locales, t } from '@/lib/i18n';
 import { routePath, segmentsFor } from '@/lib/platform';
@@ -44,7 +45,7 @@ export default async function WeekPage({ params }: PageProps) {
 
       <main
         id="conteudo"
-        className="mx-auto flex w-full max-w-[680px] flex-col gap-8 px-4 pt-8 pb-16 md:px-6 md:pt-12"
+        className="page-mobile-nav mx-auto flex w-full max-w-[680px] flex-col gap-8 px-4 pt-8 pb-16 md:px-6 md:pt-12"
       >
         <section className="flex flex-col gap-3">
           <p className="type-meta text-stone">{t(locale, 'week.eyebrow')}</p>
@@ -54,14 +55,13 @@ export default async function WeekPage({ params }: PageProps) {
 
         <section className="flex flex-col gap-4 border-t border-line pt-6">
           <h2 className="type-h2 max-w-[64ch] text-ink">{t(locale, 'week.empty.title')}</h2>
-          <Link
-            href={routePath(locale, { name: 'today' })}
-            className="type-body self-start font-medium text-ink underline decoration-terracotta decoration-2 underline-offset-4 hover:text-terracotta-text"
-          >
+          <Link href={routePath(locale, { name: 'today' })} className="text-link self-start">
             {t(locale, 'week.action')}
           </Link>
         </section>
       </main>
+
+      <MobileNav locale={locale} route={{ name: 'week' }} />
     </>
   );
 }

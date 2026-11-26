@@ -7,6 +7,7 @@ import type { Messages } from './pt';
 
 export const en = {
   'nav.label': 'Sections',
+  'nav.mobile': 'Main navigation',
   'nav.today': 'Today',
   'nav.week': 'This week',
 
@@ -29,7 +30,7 @@ export const en = {
   'week.eyebrow': "Angola's cultural agenda",
   'week.title': 'This week',
   'week.lead': 'The next seven days, city by city.',
-  'week.empty.title': 'No events this week.',
+  'week.empty.title': 'No events in the next seven days.',
   'week.action': 'Back to today',
   'week.count': {
     one: '{count} event',
@@ -38,6 +39,10 @@ export const en = {
 
   'notfound.title': 'Page not found',
   'notfound.lead': 'This page does not exist or has moved.',
+
+  'error.title': 'Something went wrong',
+  'error.lead': 'The page could not be loaded. Please try again.',
+  'error.reload': 'Reload the page',
 
   'meta.home.title': 'Today — Cultura',
   'meta.home.description': "Angola's cultural agenda: what's on today, city by city.",

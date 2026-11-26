@@ -166,9 +166,9 @@ C'est le seul moment « spectaculaire » du produit. Le reste ne bouge pas.
 
 - Hauteur 56 px mobile, 64 px desktop. Fond `paper`, filet inférieur 1 px.
 - À gauche : **logotype vectoriel** `logo.svg` (version horizontale), hauteur 24 px mobile / 28 px desktop, largeur libre, jamais déformé. En attendant une version détourée, repli typographique : symbole « C » + mot « CULTURA » en 800, 15 px, `-0.01em`.
-- À droite : sélecteur de langue (`PT ▾`), recherche (icône 20 px + libellé accessible), compte.
-- Desktop : navigation inline `Hoje · Semana · Atores · Cidades` à droite du logo. Item actif : texte `ink` + filet `terracotta` 3 px sous le mot, à 6 px.
-- Mobile : pas de menu hamburger pour la navigation principale — barre basse.
+- À droite : sélecteur de langue, recherche (icône 20 px + libellé accessible), compte. **Implémenté en P1.5 :** trois liens `PT` `FR` `EN` de 44 × 44 px, chacun avec `hreflang`, `lang` et `aria-current`. Pas de menu déroulant : un seul geste, aucun panneau à ouvrir, choix accessible au clavier. Les codes de langue ne sont pas traduits (ce sont des identifiants, pas des textes d'interface) — exception documentée à la règle i18n.
+- Desktop : navigation inline `Hoje · Semana` (puis `Atores · Cidades` quand ces pages existeront) à droite du logo. Item actif : texte `ink` + filet `terracotta` 3 px sous le mot. Chaque item a une cible de 44 px de haut.
+- Mobile : pas de menu hamburger pour la navigation principale — barre basse (§7.2).
 
 ### 7.1.1 Le logotype (acquis le 2026-11-23)
 
@@ -183,14 +183,14 @@ Règles :
 - Le logotype est **une image**, jamais recomposé en HTML/CSS. Aucun `<h1>` ne contient le mot « CULTURA » en police d'interface.
 - Il ne remplace pas Archivo : Archivo reste la seule police d'interface. Le contraste pinceau / grotesque est **voulu** — c'est la main de l'afficheur contre la rigueur du programme.
 - La flèche du « C » est le seul motif autorisé en dehors de la réglette : elle peut servir de puce de lien sortant, jamais de décoration répétée.
-- Les fichiers fournis (`logo.svg`, `Icone.svg`) sont des **vectorisations automatiques** du visuel : ils contiennent le bruit de compression du JPEG d'origine (traits beiges parasites), des marges vides et plusieurs valeurs de couleur très proches. Voir §15 pour le nettoyage requis avant P1.5.
+- Les fichiers fournis (`logo.svg`, `Icone.svg`) sont des **vectorisations automatiques** du visuel : ils contiennent le bruit de compression du JPEG d'origine (traits beiges parasites), des marges vides et plusieurs valeurs de couleur très proches. Voir §15 pour l'état réel : recadrage dérivé livré en P1.5, master nettoyé toujours attendu.
 
 ---
 
 ### 7.2 Barre de navigation mobile
 
-- 4 items : `Hoje`, `Semana`, `Atores`, `Cidades`.
-- Hauteur 56 px + `env(safe-area-inset-bottom)`. Fond `paper`, filet supérieur 1 px.
+- 4 items : `Hoje`, `Semana`, `Atores`, `Cidades`. **P1.5** n'en livre que les deux premiers : `Atores` et `Cidades` n'ont pas encore de page, et un lien mort serait un faux bouton. Les deux autres arrivent avec leurs sections (P3/P4).
+- Hauteur 56 px + `env(safe-area-inset-bottom)`. Fond `paper`, filet supérieur 1 px. Le contenu réserve cette hauteur en fin de page.
 - Icône 20 px + libellé 11 px. Item actif : icône et texte `ink`, filet `terracotta` 2 px en haut de l'item ; inactif : `stone`.
 - Cible tactile ≥ 48 × 48 px.
 
@@ -579,7 +579,8 @@ Règles : hiérarchie fixe (date → ville → heures → mention Cultura discr�
 
 - [ ] Master propre : SVG recadré, couleurs normalisées, sans bruit (ou AI/EPS source).
 - [ ] Variantes : verticale, claire sur charbon, monochrome (pour l'APK et les tampons).
-- [ ] Favicon 32 px, icône 180 px, icône maskable 512 px, image de partage OG 1200 × 630 (gabarit).
+- [x] Favicon et icône Apple : `src/app/icon.png` (64 × 64, 4,1 Ko) et `src/app/apple-icon.png` (180 × 180, 27,7 Ko), dérivés de `Icone.jpg` le 2026-11-26 — **provisoires**, comme le logotype, tant que le master nettoyé n'existe pas.
+- [ ] Icône maskable 512 px et image de partage OG 1200 × 630 (gabarit).
 - [x] Police Archivo (SIL OFL) : fichiers WOFF2 variables auto-hébergés dans `public/fonts/` avec `OFL.txt` — 2026-11-25.
 - [x] Validation de la palette et du concept (§1) par l'humain — 2026-11-23.
 - [x] Validation des wireframes des 4 écrans clés — 2026-11-23.

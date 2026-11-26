@@ -96,6 +96,17 @@ describe('cookie de langue', () => {
     );
   });
 
+  it('ajoute Secure en HTTPS, et seulement là', () => {
+    expect(serializeLocaleCookie('fr', { secure: true })).toBe(
+      `cultura_locale=fr; Path=/; Max-Age=${LOCALE_COOKIE_MAX_AGE}; SameSite=Lax; Secure`,
+    );
+    expect(serializeLocaleCookie('fr', { secure: false })).not.toContain('Secure');
+  });
+
+  it('accepte une durée de vie personnalisée', () => {
+    expect(serializeLocaleCookie('en', { maxAge: 60 })).toContain('Max-Age=60');
+  });
+
   it('relit sa propre valeur', () => {
     expect(readLocaleCookie(serializeLocaleCookie('en'))).toBe('en');
   });

@@ -9,8 +9,10 @@ out/
 dist/
 build/
 *.tsbuildinfo
-# `next-env.d.ts` est généré par Next mais versionné : sans lui, un clone neuf
-# ne peut pas passer `npm run typecheck` avant d'avoir lancé un build.
+# `next-env.d.ts` est généré par Next (chemins `dev` ou `build` selon la
+# commande) : le versionner salit l'arbre à chaque bascule. Il est ignoré et
+# recréé automatiquement ; `npm run typecheck` passe sans lui (vérifié).
+next-env.d.ts
 
 # Tests
 coverage/

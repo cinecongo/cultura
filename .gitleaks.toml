@@ -6,10 +6,9 @@
 useDefault = true
 
 [allowlist]
-description = "Binaires, verrous et médias exclus du scan"
+description = "Binaires et médias exclus du scan"
 paths = [
   '''CULTURA_MEDIA_GUIDE_v1\.0\.docx''',
-  '''package-lock\.json''',
   '''brand/.*\.png''',
   '''.*\.jpg''',
   '''.*\.docx''',

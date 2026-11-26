@@ -38,7 +38,10 @@ export function SiteHeader({ locale, route }: SiteHeaderProps) {
   return (
     <header className="border-b border-line">
       <div className="mx-auto flex h-14 w-full max-w-[1120px] items-center justify-between gap-6 px-4 md:h-16 md:px-6">
-        <Link href={routePath(locale, { name: 'today' })} className="shrink-0">
+        <Link
+          href={routePath(locale, { name: 'today' })}
+          className="flex min-h-11 shrink-0 items-center"
+        >
           {/* SVG maîtrisé et versionné : aucune optimisation d'image nécessaire,
               et `dangerouslyAllowSVG` reste inutile. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}

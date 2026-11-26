@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { MobileNav } from '@/components/mobile-nav';
 import { SiteHeader } from '@/components/site-header';
 import { TimeRuler, type RulerEvent } from '@/components/time-ruler';
 import { isLocale, t } from '@/lib/i18n';
@@ -42,7 +43,7 @@ export default async function TodayPage({ params }: PageProps) {
     <>
       <SiteHeader locale={locale} route={{ name: 'today' }} />
 
-      <main id="conteudo" className="flex flex-col">
+      <main id="conteudo" className="page-mobile-nav flex flex-col">
         <section className="surface-ink bg-ink text-paper">
           <div className="mx-auto w-full max-w-[680px] px-4 pt-8 pb-10 md:px-6 md:pt-12 md:pb-14">
             <p className="type-meta text-stone-light">{t(locale, 'home.eyebrow')}</p>
@@ -60,15 +61,14 @@ export default async function TodayPage({ params }: PageProps) {
             <h2 className="type-h2 max-w-[64ch] text-ink">
               {t(locale, 'home.empty.title', { city: defaultCity })}
             </h2>
-            <Link
-              href={routePath(locale, { name: 'week' })}
-              className="type-body self-start font-medium text-ink underline decoration-terracotta decoration-2 underline-offset-4 hover:text-terracotta-text"
-            >
+            <Link href={routePath(locale, { name: 'week' })} className="text-link self-start">
               {t(locale, 'home.empty.action')}
             </Link>
           </div>
         </section>
       </main>
+
+      <MobileNav locale={locale} route={{ name: 'today' }} />
     </>
   );
 }

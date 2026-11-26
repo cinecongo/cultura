@@ -6,8 +6,10 @@ import { formatHour, type Locale } from '@/lib/i18n';
  * La réglette horaire (DESIGN.md §6) — l'élément signature du produit.
  *
  * Un axe unique, des graduations à l'heure, un point ocre par événement. Elle
- * n'est affichée qu'une fois par page, en haut de « Hoje », et seulement s'il y
- * a un programme à montrer : un axe vide serait un décor, pas une information.
+ * n'est affichée qu'une fois par page, en haut de « Hoje ». L'axe reste visible
+ * même sans événement : il donne la forme du programme à venir, et c'est un
+ * choix produit assumé (la page ne doit pas paraître vide). Dans ce cas il est
+ * entièrement `aria-hidden`, car il n'annonce rien d'utile.
  *
  * `hour` est l'heure de Luanda en fraction d'heure (18h30 → 18,5 ; 01h00 du
  * lendemain → 25). La fenêtre s'élargit si un événement sort de 12h–02h, pour
@@ -16,8 +18,7 @@ import { formatHour, type Locale } from '@/lib/i18n';
  * Le composant ne peint pas son fond : l'appelant le pose sur l'aplat `ink`
  * (DESIGN.md §6). L'axe est décoratif pour les technologies d'assistance
  * (`aria-hidden`) ; la section porte son nom, et la liste réelle des
- * événements porte le contenu. Sans événement, tout l'axe est masqué : il
- * n'apprend rien.
+ * événements porte le contenu.
  */
 export type RulerEvent = {
   readonly id: string;
@@ -62,7 +63,7 @@ export function TimeRuler({ locale, label, events }: TimeRulerProps) {
       aria-hidden={events.length > 0 ? undefined : true}
       className="mt-8"
     >
-      <div className="overflow-x-auto">
+      <div className="ruler-scroll ruler-fade overflow-x-auto">
         <div className="min-w-[560px]">
           <div className="ruler-track" aria-hidden="true">
             {ticks.map((hour, index) => {

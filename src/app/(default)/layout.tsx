@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { preload } from 'react-dom';
 
 import { defaultLocale, htmlLangFor, t } from '@/lib/i18n';
 import { brandName } from '@/lib/site';
@@ -23,16 +24,17 @@ export const viewport: Viewport = {
 };
 
 export default function DefaultLayout({ children }: { children: ReactNode }) {
+  /* React 19 place la ressource dans `<head>` : un `<link>` écrit dans le corps
+     du document serait du contenu de métadonnées au mauvais endroit. */
+  preload('/fonts/archivo-latin.woff2', {
+    as: 'font',
+    type: 'font/woff2',
+    crossOrigin: 'anonymous',
+  });
+
   return (
     <html lang={htmlLangFor(defaultLocale)}>
       <body>
-        <link
-          rel="preload"
-          href="/fonts/archivo-latin.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
         <a href="#conteudo" className="skip-link">
           {t(defaultLocale, 'a11y.skip')}
         </a>

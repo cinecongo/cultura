@@ -49,7 +49,7 @@ Gate G0 franchie le 2026-11-23. Les étapes P0 et P1 sont livrées :
 - outillage P1.2 : ESLint, TypeScript strict, Prettier, Vitest, Playwright, gitleaks, hook pré-commit ;
 - squelette P1.3 : App Router, couche `platform`, `build:web` et `build:mobile` réels ;
 - i18n P1.4 : catalogues typés, `Intl` (fuseau `Africa/Luanda`), routes localisées, cookie de langue ;
-- design P1.5 : tokens, échelle typographique, Archivo auto-hébergée, en-tête, réglette horaire.
+- design P1.5 : tokens, échelle typographique, Archivo auto-hébergée, en-tête, barre basse mobile, réglette horaire, favicon, volet 500.
 
 **Aucune migration, aucune table, aucune donnée réelle** : la base arrive en P2/P3.
 
@@ -78,7 +78,7 @@ Gate G0 franchie le 2026-11-23. Les étapes P0 et P1 sont livrées :
 ├─ DESIGN.md                  Système de design
 ├─ DECISIONS/                 ADR
 ├─ i18n/GLOSSAIRE.md          Vocabulaire PT/FR/EN
-├─ docs/                      Notes transverses
+├─ docs/                      Notes transverses + captures de contrôle
 ├─ public/
 │  ├─ brand/logo.svg          Logotype utilisé par l'en-tête
 │  └─ fonts/                  Archivo (WOFF2) + licence OFL

@@ -7,6 +7,7 @@ import type { Messages } from './pt';
 
 export const fr = {
   'nav.label': 'Sections',
+  'nav.mobile': 'Navigation principale',
   'nav.today': "Aujourd'hui",
   'nav.week': 'Cette semaine',
 
@@ -29,7 +30,7 @@ export const fr = {
   'week.eyebrow': "Agenda culturel de l'Angola",
   'week.title': 'Cette semaine',
   'week.lead': 'Les sept prochains jours, ville par ville.',
-  'week.empty.title': 'Aucun événement cette semaine.',
+  'week.empty.title': 'Aucun événement dans les sept prochains jours.',
   'week.action': "Revenir à aujourd'hui",
   'week.count': {
     one: '{count} événement',
@@ -38,6 +39,10 @@ export const fr = {
 
   'notfound.title': 'Page introuvable',
   'notfound.lead': "Cette page n'existe pas ou a changé d'adresse.",
+
+  'error.title': 'Un problème est survenu',
+  'error.lead': "La page n'a pas pu être chargée. Réessayez.",
+  'error.reload': 'Recharger la page',
 
   'meta.home.title': "Aujourd'hui — Cultura",
   'meta.home.description':

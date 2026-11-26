@@ -115,12 +115,68 @@ test.describe('design system P1.5', () => {
   test('Archivo est chargée, pas seulement déclarée', async ({ page }) => {
     await page.goto('/fr');
 
-    const loaded = await page.evaluate(async () => {
+    const state = await page.evaluate(async () => {
       await document.fonts.ready;
-      return document.fonts.check('16px Archivo');
+      const faces = [...document.fonts].filter(
+        (face) => face.family.replace(/["']/g, '') === 'Archivo',
+      );
+      return {
+        declared: faces.length,
+        loaded: faces.filter((face) => face.status === 'loaded').length,
+      };
     });
 
-    expect(loaded).toBe(true);
+    // `document.fonts.check()` seul peut répondre `true` sans fichier : on
+    // exige une vraie FontFace Archivo à l'état `loaded` (constat N24).
+    expect(state.declared).toBeGreaterThan(0);
+    expect(state.loaded).toBeGreaterThan(0);
+
+    const font = await page.request.get('/fonts/archivo-latin.woff2');
+    expect(font.status()).toBe(200);
+    expect(font.headers()['content-type']).toContain('font');
+
     await expect(page.locator('body')).toHaveCSS('font-family', /Archivo/);
+  });
+
+  test('la barre basse mobile porte les deux sections', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 720 });
+    await page.goto('/fr');
+
+    const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+    await expect(nav).toBeVisible();
+    await expect(nav.getByRole('link')).toHaveCount(2);
+    await expect(nav.getByRole('link', { name: "Aujourd'hui" })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+
+    await nav.getByRole('link', { name: 'Cette semaine' }).click();
+    await expect(page).toHaveURL(/\/fr\/semaine\/?$/);
+    await expect(
+      page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('link', {
+        name: 'Cette semaine',
+      }),
+    ).toHaveAttribute('aria-current', 'page');
+  });
+
+  test('toutes les cibles tactiles font au moins 44 × 44 px', async ({ page }) => {
+    for (const width of [360, 1120]) {
+      await page.setViewportSize({ width, height: 800 });
+
+      for (const path of ['/fr', '/fr/semaine']) {
+        await page.goto(path);
+        const links = page.locator('a:visible');
+        const count = await links.count();
+        expect(count, `${path} @${width}`).toBeGreaterThan(0);
+
+        for (let index = 0; index < count; index += 1) {
+          const box = await links.nth(index).boundingBox();
+          const label = `${path} @${width} — lien ${index}`;
+          expect(box, label).not.toBeNull();
+          expect(box?.width ?? 0, `${label} (largeur)`).toBeGreaterThanOrEqual(44);
+          expect(box?.height ?? 0, `${label} (hauteur)`).toBeGreaterThanOrEqual(44);
+        }
+      }
+    }
   });
 });

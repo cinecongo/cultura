@@ -15,6 +15,7 @@ import type { PluralMessage } from './types';
 
 export const pt = {
   'nav.label': 'Secções',
+  'nav.mobile': 'Navegação principal',
   'nav.today': 'Hoje',
   'nav.week': 'Esta semana',
 
@@ -37,7 +38,7 @@ export const pt = {
   'week.eyebrow': 'Agenda cultural de Angola',
   'week.title': 'Esta semana',
   'week.lead': 'Os próximos sete dias, cidade a cidade.',
-  'week.empty.title': 'Ainda não há eventos esta semana.',
+  'week.empty.title': 'Ainda não há eventos nos próximos sete dias.',
   'week.action': 'Voltar a hoje',
   'week.count': {
     one: '{count} evento',
@@ -46,6 +47,10 @@ export const pt = {
 
   'notfound.title': 'Página não encontrada',
   'notfound.lead': 'Esta página não existe ou mudou de endereço.',
+
+  'error.title': 'Algo correu mal',
+  'error.lead': 'A página não pôde ser carregada. Tente novamente.',
+  'error.reload': 'Recarregar a página',
 
   'meta.home.title': 'Hoje — Cultura',
   'meta.home.description': 'A agenda cultural de Angola: o que acontece hoje, cidade a cidade.',

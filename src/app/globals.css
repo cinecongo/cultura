@@ -208,11 +208,13 @@
     top: 16px;
   }
 
-  /* Navigation principale (DESIGN.md §7.1) : filet terracotta sous l'item actif. */
+  /* Navigation principale (DESIGN.md §7.1, §12) : filet terracotta sous l'item
+     actif. Hauteur 44 px : la cible tactile minimale, même si le texte fait 24. */
   .nav-link {
     position: relative;
-    display: inline-block;
-    padding-block: 4px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     font-size: 16px;
     line-height: 24px;
     font-weight: 500;
@@ -233,15 +235,19 @@
     content: '';
     position: absolute;
     inset-inline: 0;
-    bottom: -2px;
+    bottom: 4px;
     height: 3px;
     background-color: var(--color-terracotta);
   }
 
-  /* Sélecteur de langue : codes courts, aucun interlettrage (DESIGN.md §4.1). */
+  /* Sélecteur de langue : codes courts, aucun interlettrage (DESIGN.md §4.1).
+     Chaque code est une cible de 44 × 44 px, y compris sur mobile. */
   .language-link {
-    display: inline-block;
-    padding-block: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
     font-size: 13px;
     line-height: 18px;
     font-weight: 500;
@@ -260,6 +266,85 @@
     text-decoration-color: var(--color-terracotta);
     text-decoration-thickness: 2px;
     text-underline-offset: 4px;
+  }
+
+  /* Barre basse mobile (DESIGN.md §7.2) : 56 px, cible pleine largeur. */
+  .mobile-nav-link {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 56px;
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 500;
+    color: var(--color-stone);
+    text-decoration: none;
+  }
+
+  .mobile-nav-link[aria-current='page'] {
+    color: var(--color-ink);
+  }
+
+  .mobile-nav-link[aria-current='page']::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 2px;
+    background-color: var(--color-terracotta);
+  }
+
+  .mobile-nav-link svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Le contenu défile derrière la barre basse fixe : on réserve sa hauteur
+     (56 px + zone gestuelle) en fin de page, jamais au-dessus de 768 px. */
+  @media (max-width: 767px) {
+    .page-mobile-nav {
+      padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 16px);
+    }
+  }
+
+  /* Lien d'action dans le fil du texte (DESIGN.md §4.1, §12) : souligné
+     terracotta, mais cible tactile de 44 px de haut. */
+  .text-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 500;
+    color: var(--color-ink);
+    text-decoration: underline;
+    text-decoration-color: var(--color-terracotta);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+
+  .text-link:hover {
+    color: var(--color-terracotta-text);
+  }
+
+  /* La réglette défile sur mobile (DESIGN.md §6) : barre de défilement fine,
+     seul indice d'affordance sans ajouter de décoration. */
+  .ruler-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-stone-light) transparent;
+    overscroll-behavior-x: contain;
+  }
+
+  /* Dégradé de fin : à 360 px, la dernière heure est coupée ; le fondu indique
+     qu'il reste du contenu à faire défiler. Retiré dès qu'il y a la place. */
+  @media (max-width: 767px) {
+    .ruler-fade {
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+      mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+    }
   }
 
   /*
