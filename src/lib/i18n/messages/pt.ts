@@ -150,6 +150,27 @@ export const pt = {
   'auth.signout.success': 'Saíram da vossa conta.',
   'auth.account.title': 'A vossa conta',
 
+  // P3.4 : dados da conta e supressão.
+  'auth.account.data.title': 'Os vossos dados',
+  'auth.account.data.lead': 'Podem guardar uma cópia dos vossos dados ou apagar a vossa conta.',
+  'auth.account.export.submit': 'Exportar os meus dados',
+  'auth.account.export.submitting': 'A preparar os vossos dados…',
+  'auth.account.export.success': 'Os vossos dados estão prontos. Guardem o ficheiro.',
+  'auth.account.export.error': 'Não foi possível preparar os vossos dados. Tentem novamente.',
+  'auth.account.delete.open': 'Apagar a minha conta',
+  'auth.account.delete.warning':
+    'Esta ação é definitiva. Os vossos dados e os vossos anúncios culturais serão apagados e não podem ser recuperados.',
+  'auth.account.delete.confirmPhrase.label': 'Escrevam a frase abaixo para confirmar.',
+  'auth.account.delete.confirmPhrase.value': 'APAGAR A CONTA',
+  'auth.account.delete.submit': 'Apagar a conta definitivamente',
+  'auth.account.delete.submitting': 'A apagar a conta…',
+  'auth.account.delete.cancel': 'Cancelar',
+  'auth.account.delete.error.password': 'A palavra-passe não está correta. Tentem novamente.',
+  'auth.account.delete.error.phrase':
+    'A frase não corresponde. Escrevam a frase indicada, exatamente como aparece.',
+  'auth.account.delete.error.journaled':
+    'Esta conta não pode ser apagada porque está ligada à equipa Cultura. Falem com a equipa Cultura.',
+
   'email.signature': 'Equipa Cultura',
   'email.verify.subject': 'Confirmem o vosso email na Cultura',
   'email.verify.body':
@@ -171,6 +192,9 @@ export const pt = {
   'meta.reset.description': 'Peçam um link para escolher uma nova palavra-passe.',
   'meta.password.title': 'Nova palavra-passe — Cultura',
   'meta.password.description': 'Escolham uma nova palavra-passe para a vossa conta.',
+  'meta.account.title': 'A vossa conta — Cultura',
+  'meta.account.description':
+    'Na vossa conta, podem ver e exportar os vossos dados e apagar a conta.',
   'meta.guard.title': 'Sem acesso — Cultura',
   'meta.guard.description': 'Esta página não está disponível para a vossa conta.',
   'meta.actor.title': 'Espaço de agente cultural — Cultura',

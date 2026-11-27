@@ -143,6 +143,27 @@ export const en = {
   'auth.signout.success': 'You have signed out.',
   'auth.account.title': 'Your account',
 
+  // P3.4: account data and deletion.
+  'auth.account.data.title': 'Your data',
+  'auth.account.data.lead': 'You can save a copy of your data or delete your account.',
+  'auth.account.export.submit': 'Export my data',
+  'auth.account.export.submitting': 'Preparing your data…',
+  'auth.account.export.success': 'Your data is ready. Save the file.',
+  'auth.account.export.error': 'We could not prepare your data. Please try again.',
+  'auth.account.delete.open': 'Delete my account',
+  'auth.account.delete.warning':
+    'This action is permanent. Your data and cultural announcements will be deleted and cannot be recovered.',
+  'auth.account.delete.confirmPhrase.label': 'Type the phrase below to confirm.',
+  'auth.account.delete.confirmPhrase.value': 'DELETE MY ACCOUNT',
+  'auth.account.delete.submit': 'Delete account permanently',
+  'auth.account.delete.submitting': 'Deleting account…',
+  'auth.account.delete.cancel': 'Cancel',
+  'auth.account.delete.error.password': 'The password is incorrect. Please try again.',
+  'auth.account.delete.error.phrase':
+    'The phrase does not match. Enter the phrase shown, exactly as it appears.',
+  'auth.account.delete.error.journaled':
+    'This account cannot be deleted because it is linked to decisions by the Cultura team. Contact the Cultura team.',
+
   'email.signature': 'The Cultura team',
   'email.verify.subject': 'Confirm your email address on Cultura',
   'email.verify.body':
@@ -164,6 +185,9 @@ export const en = {
   'meta.reset.description': 'Request a link to choose a new password.',
   'meta.password.title': 'New password — Cultura',
   'meta.password.description': 'Choose a new password for your account.',
+  'meta.account.title': 'Your account — Cultura',
+  'meta.account.description':
+    'In your account, you can view and export your data, or delete your account.',
   'meta.guard.title': 'Access denied — Cultura',
   'meta.guard.description': 'This page is not available for your account.',
   'meta.actor.title': 'Cultural professional space — Cultura',

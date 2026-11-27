@@ -10,7 +10,15 @@ import { authAdminClient } from './clients';
 import { AuthError } from './errors';
 
 export type RateLimitScope =
-  'signup' | 'signin' | 'reset' | 'resend' | 'password' | 'callback' | 'roles';
+  | 'signup'
+  | 'signin'
+  | 'reset'
+  | 'resend'
+  | 'password'
+  | 'callback'
+  | 'roles'
+  | 'accountExport'
+  | 'accountDelete';
 
 /**
  * Clé de fenêtre opacifiée par HMAC : ni IP ni email en clair dans la table.

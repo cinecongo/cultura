@@ -12,7 +12,7 @@ export const AUTH_META: Record<
   verify: { title: 'meta.verify.title', description: 'meta.verify.description' },
   reset: { title: 'meta.reset.title', description: 'meta.reset.description' },
   password: { title: 'meta.password.title', description: 'meta.password.description' },
-  account: { title: 'auth.account.title', description: 'meta.guard.description' },
+  account: { title: 'meta.account.title', description: 'meta.account.description' },
 };
 
 export const AUTH_LEAD: Partial<Record<AuthScreenName, StringKey>> = {

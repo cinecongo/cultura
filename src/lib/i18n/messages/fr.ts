@@ -149,6 +149,28 @@ export const fr = {
   'auth.signout.success': 'Vous êtes déconnecté.',
   'auth.account.title': 'Votre compte',
 
+  // P3.4 : données du compte et suppression.
+  'auth.account.data.title': 'Vos données',
+  'auth.account.data.lead':
+    'Vous pouvez enregistrer une copie de vos données ou supprimer votre compte.',
+  'auth.account.export.submit': 'Exporter mes données',
+  'auth.account.export.submitting': 'Préparation de vos données…',
+  'auth.account.export.success': 'Vos données sont prêtes. Enregistrez le fichier.',
+  'auth.account.export.error': 'Impossible de préparer vos données. Réessayez.',
+  'auth.account.delete.open': 'Supprimer mon compte',
+  'auth.account.delete.warning':
+    'Cette action est définitive. Vos données et vos annonces culturelles seront supprimées et ne pourront pas être récupérées.',
+  'auth.account.delete.confirmPhrase.label': 'Saisissez la phrase ci-dessous pour confirmer.',
+  'auth.account.delete.confirmPhrase.value': 'EFFACER MON COMPTE',
+  'auth.account.delete.submit': 'Supprimer définitivement le compte',
+  'auth.account.delete.submitting': 'Suppression du compte…',
+  'auth.account.delete.cancel': 'Annuler',
+  'auth.account.delete.error.password': 'Le mot de passe est incorrect. Réessayez.',
+  'auth.account.delete.error.phrase':
+    'La phrase ne correspond pas. Saisissez la phrase indiquée, exactement telle qu’elle apparaît.',
+  'auth.account.delete.error.journaled':
+    'Ce compte ne peut pas être supprimé car il est lié à des décisions de l’équipe Cultura. Contactez l’équipe Cultura.',
+
   'email.signature': 'L’équipe Cultura',
   'email.verify.subject': 'Confirmez votre adresse email sur Cultura',
   'email.verify.body':
@@ -170,6 +192,9 @@ export const fr = {
   'meta.reset.description': 'Demandez un lien pour choisir un nouveau mot de passe.',
   'meta.password.title': 'Nouveau mot de passe — Cultura',
   'meta.password.description': 'Choisissez un nouveau mot de passe pour votre compte.',
+  'meta.account.title': 'Votre compte — Cultura',
+  'meta.account.description':
+    'Dans votre compte, vous pouvez consulter et exporter vos données, ou supprimer votre compte.',
   'meta.guard.title': 'Accès refusé — Cultura',
   'meta.guard.description': "Cette page n'est pas disponible pour votre compte.",
   'meta.actor.title': 'Espace acteur culturel — Cultura',

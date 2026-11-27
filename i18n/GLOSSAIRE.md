@@ -51,7 +51,11 @@
 | Se connecter | Entrar | Sign in |
 | Créer un compte | Criar conta | Create account |
 | Se déconnecter | Sair | Sign out |
-| Publier une annonce | Publicar anúncio | Publish announcement |
+| Vos données | Os vossos dados | Your data |
+| Exporter mes données | Exportar os meus dados | Export my data |
+| Supprimer mon compte | Apagar a minha conta | Delete my account |
+| Supprimer définitivement le compte | Apagar a conta definitivamente | Delete account permanently |
+| Publier une annonce culturelle | Publicar anúncio cultural | Publish cultural announcement |
 | Publier un événement | Publicar evento | Publish event |
 | Enregistrer le brouillon | Guardar rascunho | Save draft |
 | Soumettre pour validation | Enviar para análise | Submit for review |

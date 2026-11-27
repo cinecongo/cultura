@@ -63,11 +63,20 @@ export const callbackSchema = z
   })
   .strip();
 
+/** P3.4 : aucun identifiant, rôle ou phrase attendue n'est accepté du client. */
+export const accountDeleteSchema = z
+  .object({
+    password: z.string().min(1).max(200),
+    confirmPhrase: z.string().trim().min(1).max(64),
+  })
+  .strip();
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type SigninInput = z.infer<typeof signinSchema>;
 export type EmailInput = z.infer<typeof emailSchema>;
 export type PasswordInput = z.infer<typeof passwordSchema>;
 export type CallbackInput = z.infer<typeof callbackSchema>;
+export type AccountDeleteInput = z.infer<typeof accountDeleteSchema>;
 
 /** Traduit un échec zod en clé i18n, sans exposer la contrainte technique. */
 export function validationError(result: z.ZodError): AuthError {

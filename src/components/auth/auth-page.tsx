@@ -11,6 +11,7 @@ import { isLocale, t, type Locale, type StringKey } from '@/lib/i18n';
 import { routePath, segmentsFor } from '@/lib/platform';
 import { pageMetadata } from '@/lib/seo';
 
+import { AccountData } from './account-data';
 import { AuthForm } from './auth-form';
 import { AuthShell } from './auth-shell';
 import { SignoutButton } from './signout-button';
@@ -102,6 +103,7 @@ export function authPage(name: AuthScreenName, segment: string) {
         title={t(locale, 'auth.account.title')}
       >
         <p className="type-body mt-8 text-ink">{profile.email}</p>
+        <AccountData locale={locale} />
         <SignoutButton locale={locale} />
       </AuthShell>
     );

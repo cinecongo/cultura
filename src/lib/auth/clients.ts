@@ -57,6 +57,23 @@ export function authAdminClient() {
   );
 }
 
+/**
+ * Vérifie le mot de passe courant sans toucher à la session de l'utilisateur :
+ * ce client ne persiste aucun jeton et n'écrit aucun cookie.
+ */
+export async function verifyAccountPassword(email: string, password: string): Promise<boolean> {
+  const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY } = getPublicEnv();
+  const client = createClient<Database>(NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  return error === null;
+}
+
 /** Utilisateur courant vérifié auprès de Supabase (jamais le JWT seul). */
 export async function currentUser() {
   const { data, error } = await authServerClient().auth.getUser();
