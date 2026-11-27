@@ -15,6 +15,8 @@
 |---|---|---|---|
 | annonce culturelle | anúncio cultural | cultural announcement | Remplace « publication ». Jamais « publicação », « post ». |
 | acteur culturel | agente cultural | cultural professional | Couvre artiste, promoteur, salle, festival, organisation. « Ator cultural » est l'alternative à valider. |
+| espace acteur culturel | espaço de agente cultural | cultural professional space | Espace protégé de l'acteur culturel (P3.2). |
+| espace d'administration | espaço de administração | administration space | Espace protégé de l'administration (P3.2). |
 | fiche | ficha | profile | Page d'un acteur culturel. |
 | revendiquer une fiche | reclamar a ficha | claim a profile | Action d'un acteur inscrit. |
 | fiche gérée par l'équipe | ficha gerida pela equipa | team-managed profile | Mention obligatoire, pas de badge vérifié. |

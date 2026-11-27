@@ -137,7 +137,15 @@ export const pt = {
   'auth.guard.forbidden.title': 'Sem acesso a esta página',
   'auth.guard.forbidden.lead':
     'A vossa conta é de membro. Para gerirem uma fiche, reclamem a vossa fiche.',
+  'auth.guard.forbidden.roleLead':
+    'A vossa conta não tem acesso a este espaço. Vejam o que podem fazer na vossa conta.',
   'auth.guard.backHome': 'Voltem para Hoje',
+  'auth.actor.title': 'O vosso espaço de agente cultural',
+  'auth.actor.lead':
+    'Gerem a vossa fiche, publicam os vossos anúncios culturais e eventos e veem as vossas estatísticas.',
+  'auth.admin.title': 'Espaço de administração',
+  'auth.admin.lead':
+    'Validam anúncios culturais e eventos, tratam revendicações de fichas e gerem contas de agentes culturais.',
   'auth.signout.label': 'Sair',
   'auth.signout.success': 'Saíram da vossa conta.',
   'auth.account.title': 'A vossa conta',
@@ -165,6 +173,12 @@ export const pt = {
   'meta.password.description': 'Escolham uma nova palavra-passe para a vossa conta.',
   'meta.guard.title': 'Sem acesso — Cultura',
   'meta.guard.description': 'Esta página não está disponível para a vossa conta.',
+  'meta.actor.title': 'Espaço de agente cultural — Cultura',
+  'meta.actor.description':
+    'No vosso espaço de agente cultural: gerem a vossa fiche e publicam anúncios culturais e eventos em Angola.',
+  'meta.admin.title': 'Espaço de administração — Cultura',
+  'meta.admin.description':
+    'No espaço de administração: validam conteúdos, tratam revendicações de fichas e gerem contas de agentes culturais.',
 };
 
 export type Messages = typeof pt;

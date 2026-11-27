@@ -1,3 +1,5 @@
+import './tests/e2e/support/test-env';
+
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 

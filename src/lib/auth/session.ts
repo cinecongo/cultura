@@ -1,8 +1,19 @@
 import 'server-only';
 
+import { cache } from 'react';
+import { z } from 'zod';
+
 import { authServerClient, currentUser } from './clients';
 
-export type Role = 'membre' | 'acteur' | 'editeur' | 'admin';
+export const roleSchema = z.enum(['membre', 'acteur', 'editeur', 'admin']);
+const profileSchema = z.object({
+  id: z.string().min(1),
+  email: z.email().max(254),
+  role: roleSchema,
+  langue_preferee: z.enum(['pt', 'fr', 'en']),
+});
+
+export type Role = z.infer<typeof roleSchema>;
 
 export type SessionProfile = {
   readonly id: string;
@@ -16,7 +27,7 @@ export type SessionProfile = {
  * Le rôle est relu en base à chaque appel : il n'est jamais déduit d'un champ
  * modifiable par l'utilisateur, ni du JWT seul.
  */
-export async function currentProfile(): Promise<SessionProfile | null> {
+export const currentProfile = cache(async (): Promise<SessionProfile | null> => {
   const user = await currentUser();
   if (!user) return null;
 
@@ -27,15 +38,17 @@ export async function currentProfile(): Promise<SessionProfile | null> {
     .maybeSingle();
 
   if (error || !data) return null;
+  const parsed = profileSchema.safeParse(data);
+  if (!parsed.success) return null;
 
   return {
     id: user.id,
-    email: data.email,
-    role: data.role as Role,
-    langue_preferee: data.langue_preferee as 'pt' | 'fr' | 'en',
+    email: parsed.data.email,
+    role: parsed.data.role,
+    langue_preferee: parsed.data.langue_preferee,
     emailConfirmedAt: user.email_confirmed_at ?? null,
   };
-}
+});
 
 /** Révoque la session courante et toutes les autres sessions de l'utilisateur. */
 export async function signOutEverywhere(): Promise<void> {

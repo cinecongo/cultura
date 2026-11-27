@@ -22,7 +22,9 @@ export type RouteName =
   | 'verify'
   | 'reset'
   | 'password'
-  | 'account';
+  | 'account'
+  | 'actorSpace'
+  | 'adminSpace';
 
 export type Route =
   | {
@@ -37,7 +39,9 @@ export type Route =
         | 'verify'
         | 'reset'
         | 'password'
-        | 'account';
+        | 'account'
+        | 'actorSpace'
+        | 'adminSpace';
     }
   | { readonly name: 'event'; readonly slug: string }
   | { readonly name: 'actor'; readonly slug: string };
@@ -60,6 +64,8 @@ const segments: Record<Locale, SegmentTable> = {
     reset: 'novapalavrapasse',
     password: 'alterarpalavrapasse',
     account: 'conta',
+    actorSpace: 'espacoagente',
+    adminSpace: 'espacoadmin',
   },
   fr: {
     today: '',
@@ -75,6 +81,8 @@ const segments: Record<Locale, SegmentTable> = {
     reset: 'nouveaumotpasse',
     password: 'modifiermotpasse',
     account: 'compte',
+    actorSpace: 'espaceacteur',
+    adminSpace: 'espaceadmin',
   },
   en: {
     today: '',
@@ -90,6 +98,8 @@ const segments: Record<Locale, SegmentTable> = {
     reset: 'resetpassword',
     password: 'changepassword',
     account: 'account',
+    actorSpace: 'actorspace',
+    adminSpace: 'adminspace',
   },
 };
 

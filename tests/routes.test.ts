@@ -101,6 +101,35 @@ describe('segmentsFor', () => {
       }
     }
   });
+
+  it('localise les deux espaces protégés sans chemin en dur', () => {
+    expect(routePath('pt', { name: 'actorSpace' })).toBe('/pt/espacoagente');
+    expect(routePath('pt', { name: 'adminSpace' })).toBe('/pt/espacoadmin');
+    expect(routePath('fr', { name: 'actorSpace' })).toBe('/fr/espaceacteur');
+    expect(routePath('fr', { name: 'adminSpace' })).toBe('/fr/espaceadmin');
+    expect(routePath('en', { name: 'actorSpace' })).toBe('/en/actorspace');
+    expect(routePath('en', { name: 'adminSpace' })).toBe('/en/adminspace');
+  });
+
+  it('fournit une page serveur pour chaque espace protégé localisé', () => {
+    const spaces = ['actorSpace', 'adminSpace'] as const;
+    for (const locale of locales) {
+      for (const space of spaces) {
+        const segment = segmentsFor(locale)[space];
+        const file = join(
+          process.cwd(),
+          'src',
+          'app',
+          '(localized)',
+          '[locale]',
+          '(spaces)',
+          segment,
+          'page.web.tsx',
+        );
+        expect(existsSync(file), `${locale}.${space} → /${locale}/${segment}`).toBe(true);
+      }
+    }
+  });
 });
 
 describe('localeFromPath', () => {

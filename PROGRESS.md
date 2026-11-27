@@ -26,7 +26,7 @@
 | P2.5 | Bucket d'images privé | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; upload non-image refusé, WebP accepté (test réel) |
 | **Gate G2** | Clôture P2 | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** |
 | P3.1 | Inscription, connexion, vérification, réinitialisation | `DONE` | Premier verdict `REFUSÉ` (`/en/account` 404) corrigé ; second verdict `VALIDÉ` le 2026-11-27 ; prochaine étape P3.2 |
-| P3.2 | Rôles et garde de routes | `TODO` | — |
+| P3.2 | Rôles et garde de routes | `IN_PROGRESS` | Plan enregistré ci-dessous (2026-11-27) ; P3.3/P3.4 restent `TODO` |
 | P3.3 | Session sur mobile | `TODO` | Émulateur Android Studio à créer (AVD absent) |
 | P3.4 | Suppression de compte et export | `TODO` | — |
 | P4 → P10 | — | `TODO` | — |
@@ -847,6 +847,46 @@ Prochaine étape autorisée : P3 (authentification et rôles), conformément au 
 - **Action obligatoire après correction :** toutes les vérifications ont été rejouées intégralement le 2026-11-27 : format OK, lint 0, typecheck 0, **113/113** unitaires, **15/15** RLS+stockage, **27/27** e2e, build web **72** entrées, build mobile 11 pages, `php -l` OK, `no leaks found`, `0 vulnerabilities`, migrations 5/5 et dry-run `upToDate`. Un **nouveau verifier neuf** est demandé. Le premier verdict reste consigné ; aucun `DONE` n'est écrit par le constructeur.
 - **Verdict verifier final (2026-11-27, second passage) : `VALIDÉ`.** Un sous-agent `general` neuf, sans lien avec le constructeur ni le premier verifier, a rejoué les douze commandes sur un arbre propre à `b2d463d` : format/lint/typecheck 0, **113/113** unitaires, **15/15** RLS+stockage, **27/27** e2e, builds web (72 entrées, dont `ƒ /[locale]/account`) et mobile (11 pages) OK, `php -l` OK, gitleaks `no leaks found` (avec sonde positive hors dépôt), audit 0, migrations 5/5 et dry-run `upToDate`. Il a en plus : contrôlé `/en/account` en HTTP direct (200, garde-fou « Sign in to continue »), réalisé un contre-essai Vitest en masquant le fichier (le test échoue bien), validé la continuation EHLO SMTP sur banc d'essai local (3 lignes acceptées, 40 lignes et `550` rejetés), vérifié l'absence de régression du bac à sable, comparé les **117 clés** i18n PT/FR/EN (0 manquante, 0 surnuméraire, 0 vide) et recontrôlé B1–B4, la RLS, le rôle relu en base et l'absence de `dangerouslySetInnerHTML`. **Bloquants : aucun.** Le verifier n'a lui-même écrit aucun `DONE` et n'a rien modifié ; le présent `DONE` est consigné par le constructeur **uniquement sur la base de son verdict**.
 - **Réserves non bloquantes pour P3.1, bloquantes pour la production :** clés Turnstile de test (O7), SMTP réel non disponible (O6), en-têtes non appliqués à l'export mobile, rotation O12, Q7 et O5/O13.
+
+---
+
+## [P3.2] Rôles et garde de routes
+
+- **Statut :** `IN_PROGRESS` (une étape à la fois ; P3.3 et P3.4 restent `TODO`).
+- **Date :** 2026-11-27.
+- **Critère du guide :** « Un membre ne peut ni atteindre l'espace acteur ni l'admin (test e2e + test d'API directe). »
+- **Agents/skills appelés :** `frontend-builder`, `qa-tester`, `security-reviewer`, `i18n-auditor`, puis `verifier`. Les agents dédiés ne sont pas installés ici (seuls `explore` et `general` existent) ; substitution consignée : sous-agents `general` en revue amont (sécurité et i18n, lecture seule) avant écriture, puis verifier neuf pour le verdict. Aucun saut silencieux.
+- **Décision de cadrage (utilisateur, 2026-11-27) :** démarrer P3.2 avec une **garde réutilisable**, sans attendre les écrans fonctionnels de P4.
+- **Plan court :**
+  1. Ajouter deux routes canoniques protégées (`actorSpace`, `adminSpace`) à la table unique `src/lib/platform/routes.ts`, avec segments PT/FR/EN alphanumériques ; aucune URL en dur.
+  2. Centraliser la hiérarchie des rôles et la décision d'accès dans `src/lib/auth/guard.ts` ; le rôle est **relu en base** via `currentProfile()`, jamais déduit du JWT ou d'un champ client. **Matrice tranchée par l'utilisateur le 2026-11-27 : espace acteur = `acteur`, `editeur`, `admin` ; espace admin = `admin` seul ; `membre` refusé partout.** L'`editeur` hérite ici des droits d'accès généraux à l'espace acteur (pas des statistiques privées d'un acteur, qui restent à cadrer en P4).
+  3. Créer les six pages localisées minimales partageant une fabrique serveur : contenu autorisé ou écran de garde i18n ; aucun contenu protégé n'est rendu avant l'autorisation.
+  4. Ajouter un handler d'API directe `/api/roles/[space]` avec validation zod du segment, limitation de débit et réponse `403` générique pour un membre (aucune fuite de rôle pour un appel non authentifié au-delà du minimum).
+  5. Ajouter les clés PT/FR/EN strictement nécessaires (titres des deux espaces + métadonnées), en réutilisant `auth.guard.*` et `meta.guard.*` ; zéro texte en dur.
+  6. Tests : unitaires (hiérarchie, zod, handler), e2e (membre refusé sur les six pages, acteur/admin autorisés), API directe (`403` pour membre, `200` pour rôle suffisant). Aucun `proxy.ts` d'autorisation : la doc Next 16 le réserve aux contrôles optimistes.
+- **Livrables effectifs :** `src/lib/auth/guard.ts`, `src/components/auth/guard-page.tsx`, 6 pages `page.web.tsx` sous `(spaces)`, `src/app/api/roles/[space]/route.web.ts`, durcissement zod de `src/lib/auth/session.ts`, scope `'roles'` de `src/lib/auth/rate-limit.ts`, extensions de `routes.ts` et des trois catalogues, `tests/role-guard.test.ts`, `tests/e2e/role-guard.e2e.ts`, `tests/e2e/support/{test-env,role-fixtures}.ts`, extension de `tests/routes.test.ts`, glossaire mis à jour.
+- **Preuves (commandes réelles, 2026-11-27) :**
+
+  | Contrôle | Commande | Résultat |
+  |---|---|---|
+  | Format | `npm run format:check` | « All matched files use Prettier code style! » |
+  | Lint | `npm run lint` | 0 erreur |
+  | Types | `npm run typecheck` | 0 erreur |
+  | Unitaires | `npm test` | **125/125** (10 fichiers) |
+  | RLS + stockage | `npm run test:rls` | **15/15** (2 fichiers) |
+  | E2E | `npm run test:e2e` | **30/30** (dont 3 nouveaux tests de garde) |
+  | Build web | `npm run build:web` | OK ; `ƒ /[locale]/actorspace`, `ƒ /[locale]/adminspace`, `ƒ /[locale]/espaceacteur`, `ƒ /[locale]/espaceadmin`, `ƒ /[locale]/espacoagente`, `ƒ /[locale]/espacoadmin`, `ƒ /api/roles/[space]` présents |
+  | Build mobile | `npm run build:mobile` | OK ; `out/` en 11 pages, aucune page gardée ni handler API exporté (avertissement `headers` connu, consigné) |
+  | Secrets | `npm run secrets` | `no leaks found` (42 commits) |
+  | Audit | `npm run audit` | `found 0 vulnerabilities` |
+  | Migrations | `npx supabase migration list --remote` | **5/5** locales = distantes |
+  | Dry-run | `npx supabase db push --dry-run --remote` | `upToDate: true`, `migrations: []` |
+  | i18n | `tests/i18n.test.ts` + comptage | **126 clés** en PT, FR et EN ; 0 manquante, 0 surnuméraire, 0 vide |
+
+- **Contrôles ciblés P3.2 :** la matrice `acteur/editeur/admin` → espace acteur et `admin` seul → espace admin est prouvée par `tests/role-guard.test.ts` ; `tests/e2e/role-guard.e2e.ts` couvre les six pages en anonyme (redirection locale vers la connexion, sans `?next`), en membre (refus i18n, ni `data-space-content` ni titre de l'espace dans le HTML initial, présence du titre de garde), la dégradation/régénération de rôle **sans déconnexion**, un faux rôle `admin` injecté dans `app_metadata` ignoré, et la sonde `/api/roles/{actor|admin}` (`401`/`403`/`200`, `400` sur segment invalide, en-tête `no-store`/`no-referrer`/`nosniff`). Les comptes de test sont promus via un client `service_role` **dans le processus Playwright** puis supprimés par `auth.admin.deleteUser` ; aucune route de test n'existe dans l'application.
+- **Correction pendant la vérification (toutes les commandes rejouées ensuite) :** le `<title>` d'une page refusée exposait encore le titre de l'espace protégé ; `generateMetadata` suit désormais la même décision que la page (`meta.guard.*` en cas de refus) et `currentProfile()` est mémoïsé par requête avec `cache()` de React pour éviter la double lecture entre métadonnées et page. L'assertion e2e vérifie désormais l'absence **et** la présence. Un test e2e préexistant (réinitialisation de mot de passe) a montré un délai de 5 s trop court sous 3 workers : il passe isolément et son attente a été portée à 10 s, comme l'attente de connexion déjà en place ; aucune assertion supprimée ni assouplie.
+- **Non applicable :** `php -l scripts/mailer.php` (aucun fichier PHP modifié en P3.2 ; l'exécutable `php` n'est d'ailleurs plus sur le PATH de ce shell). Le mailer reste inchangé et déjà validé en P3.1.
+- **Verdict verifier :** en attente ; P3.2 ne sera pas marqué `DONE` par le constructeur. Gate G3 reste ouvert ; P3.3 et P3.4 restent `TODO`.
 
 ---
 

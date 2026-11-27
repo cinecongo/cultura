@@ -130,7 +130,15 @@ export const en = {
   'auth.guard.forbidden.title': 'You cannot access this page',
   'auth.guard.forbidden.lead':
     'Your account is a member account. To manage a profile, claim your profile.',
+  'auth.guard.forbidden.roleLead':
+    'Your account cannot access this space. See what you can do in your account.',
   'auth.guard.backHome': 'Back to Today',
+  'auth.actor.title': 'Your cultural professional space',
+  'auth.actor.lead':
+    'Manage your profile, publish your cultural announcements and events, and view your statistics.',
+  'auth.admin.title': 'Administration space',
+  'auth.admin.lead':
+    'Approve cultural announcements and events, handle profile claims and manage cultural professional accounts.',
   'auth.signout.label': 'Sign out',
   'auth.signout.success': 'You have signed out.',
   'auth.account.title': 'Your account',
@@ -158,4 +166,10 @@ export const en = {
   'meta.password.description': 'Choose a new password for your account.',
   'meta.guard.title': 'Access denied — Cultura',
   'meta.guard.description': 'This page is not available for your account.',
+  'meta.actor.title': 'Cultural professional space — Cultura',
+  'meta.actor.description':
+    'In your cultural professional space: manage your profile and publish cultural announcements and events in Angola.',
+  'meta.admin.title': 'Administration space — Cultura',
+  'meta.admin.description':
+    'In the administration space: approve content, handle profile claims and manage cultural professional accounts.',
 } satisfies Messages;

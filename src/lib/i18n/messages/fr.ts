@@ -136,7 +136,15 @@ export const fr = {
   'auth.guard.forbidden.title': 'Accès refusé à cette page',
   'auth.guard.forbidden.lead':
     'Votre compte est un compte membre. Pour gérer une fiche, revendiquez votre fiche.',
+  'auth.guard.forbidden.roleLead':
+    "Votre compte n'a pas accès à cet espace. Découvrez ce que vous pouvez faire dans votre compte.",
   'auth.guard.backHome': "Revenir à la page Aujourd'hui",
+  'auth.actor.title': 'Votre espace acteur culturel',
+  'auth.actor.lead':
+    'Gérez votre fiche, publiez vos annonces culturelles et vos événements, et consultez vos statistiques.',
+  'auth.admin.title': 'Espace d’administration',
+  'auth.admin.lead':
+    'Validez les annonces culturelles et les événements, traitez les revendications de fiches et gérez les comptes d’acteurs culturels.',
   'auth.signout.label': 'Se déconnecter',
   'auth.signout.success': 'Vous êtes déconnecté.',
   'auth.account.title': 'Votre compte',
@@ -164,4 +172,10 @@ export const fr = {
   'meta.password.description': 'Choisissez un nouveau mot de passe pour votre compte.',
   'meta.guard.title': 'Accès refusé — Cultura',
   'meta.guard.description': "Cette page n'est pas disponible pour votre compte.",
+  'meta.actor.title': 'Espace acteur culturel — Cultura',
+  'meta.actor.description':
+    'Dans votre espace acteur culturel : gérez votre fiche et publiez des annonces culturelles et des événements en Angola.',
+  'meta.admin.title': 'Espace d’administration — Cultura',
+  'meta.admin.description':
+    "Dans l'espace d'administration : validez les contenus, traitez les revendications de fiches et gérez les comptes d'acteurs culturels.",
 } satisfies Messages;

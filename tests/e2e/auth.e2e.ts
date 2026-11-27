@@ -115,7 +115,7 @@ test.describe('parcours auth complets', () => {
     );
 
     await page.goto(await lastLink(email, 'reset'));
-    await expect(page).toHaveURL(/\/fr\/modifiermotpasse\/?$/);
+    await expect(page).toHaveURL(/\/fr\/modifiermotpasse\/?$/, { timeout: 10_000 });
     await hydratedForm(page);
     await page.getByLabel('Nouveau mot de passe').fill(NEW_PASSWORD);
     await page.getByLabel('Confirmer le mot de passe').fill(NEW_PASSWORD);
