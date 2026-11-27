@@ -132,6 +132,17 @@ describe('segmentsFor', () => {
   });
 });
 
+describe('handlers du compte (P3.4)', () => {
+  it('fournit les deux handlers web, sans handler mobile', () => {
+    for (const name of ['export', 'delete'] as const) {
+      const web = join(process.cwd(), 'src', 'app', 'api', 'account', name, 'route.web.ts');
+      const mobile = join(process.cwd(), 'src', 'app', 'api', 'account', name, 'route.mobile.ts');
+      expect(existsSync(web), `api/account/${name}/route.web.ts`).toBe(true);
+      expect(existsSync(mobile), `api/account/${name}/route.mobile.ts`).toBe(false);
+    }
+  });
+});
+
 describe('localeFromPath', () => {
   it('extrait la langue du premier segment', () => {
     expect(localeFromPath('/pt/hoje')).toBe('pt');

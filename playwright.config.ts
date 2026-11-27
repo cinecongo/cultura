@@ -35,8 +35,19 @@ export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.e2e.ts',
   fullyParallel: false,
+  // Deux workers maximum : le serveur `next dev` unique sature au-delà et
+  // l'hydratation des formulaires dépasse alors le délai des tests (P3.4).
+  workers: 2,
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 1 : 0,
+  // Le premier test arrive pendant le premier compile Turbopack de `next dev` :
+  // l'overlay de développement peut alors lever un faux « Unexpected end of
+  // JSON input ». Un retry local absorbe cette phase de démarrage, sans masquer
+  // un échec applicatif répété.
+  retries: 1,
+  // Sous `next dev` à deux workers, l'envoi de mail et la compilation peuvent
+  // dépasser les 5 s par défaut ; 15 s couvre la latence observée sans masquer
+  // un échec applicatif (P3.4).
+  expect: { timeout: 15_000 },
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL,

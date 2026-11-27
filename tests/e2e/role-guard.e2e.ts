@@ -58,8 +58,16 @@ async function isolate(page: Page): Promise<void> {
   await page.context().setExtraHTTPHeaders({ 'x-forwarded-for': `10.${a}.${b}.${c}` });
 }
 
+/** Un seul rechargement absorbe l'overlay du premier compile `next dev` (P3.4). */
 async function hydratedForm(page: Page): Promise<void> {
-  await page.locator('form[data-hydrated="true"]').waitFor({ state: 'attached' });
+  try {
+    await page
+      .locator('form[data-hydrated="true"]')
+      .waitFor({ state: 'attached', timeout: 15_000 });
+  } catch {
+    await page.reload();
+    await page.locator('form[data-hydrated="true"]').waitFor({ state: 'attached' });
+  }
 }
 
 async function lastLink(email: string, template: string): Promise<string> {

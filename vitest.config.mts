@@ -10,6 +10,9 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // Les tests RLS parlent à la base distante via le pooler : 5 s par défaut
+    // est trop court quand la latence réseau augmente (mesuré en P3.4).
+    testTimeout: 30_000,
     include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
     coverage: {
       provider: 'v8',

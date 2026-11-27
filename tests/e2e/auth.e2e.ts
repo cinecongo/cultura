@@ -25,9 +25,20 @@ async function isolate(page: Page): Promise<void> {
   await page.context().setExtraHTTPHeaders({ 'x-forwarded-for': `10.${a}.${b}.${c}` });
 }
 
-/** Le HTML serveur est remplacé à l'hydratation : attendre le marqueur client. */
+/**
+ * Le HTML serveur est remplacé à l'hydratation : attendre le marqueur client.
+ * Au premier compile Turbopack de `next dev`, l'overlay peut interrompre une
+ * hydratation ; un seul rechargement absorbe cette phase de démarrage (P3.4).
+ */
 async function hydratedForm(page: Page): Promise<void> {
-  await page.locator('form[data-hydrated="true"]').waitFor({ state: 'attached' });
+  try {
+    await page
+      .locator('form[data-hydrated="true"]')
+      .waitFor({ state: 'attached', timeout: 15_000 });
+  } catch {
+    await page.reload();
+    await page.locator('form[data-hydrated="true"]').waitFor({ state: 'attached' });
+  }
 }
 
 async function lastLink(email: string, template: string): Promise<string> {
