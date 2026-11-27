@@ -57,7 +57,7 @@ describe('RLS — contenu et isolation (P2.3)', () => {
     );
   });
 
-  it('lectures : le membre non-autorisé ne voit pas l’annonce, l’acteur propriétaire oui', async () => {
+  it('lectures : anonyme/membre ne lisent pas une annonce en attente ; l’acteur propriétaire oui', async () => {
     await setJwtUser(client, MEMBRE);
     const membreAnnonce = await client.query(`select count(*)::int as n from public.annonces`);
     expect(membreAnnonce.rows[0].n).toBe(0);
@@ -67,14 +67,54 @@ describe('RLS — contenu et isolation (P2.3)', () => {
     expect(aAnnonce.rows[0].n).toBe(1);
   });
 
-  it('lectures : l’admin voit les annonces valides publiques et refuse les autres', async () => {
-    await setJwtUser(client, ADMIN);
-    const ok = await client.query(`update public.annonces set statut = 'valide' where id = $1`, [
-      ANNONCE_A,
-    ]);
-    expect(ok.rowCount).toBeGreaterThanOrEqual(0);
+  it('lectures : l’acteur B ne lit pas celle de l’acteur A', async () => {
+    await setJwtUser(client, ACTEUR_B);
+    const bAnnonce = await client.query(
+      `select count(*)::int as n from public.annonces where id = $1`,
+      [ANNONCE_A],
+    );
+    expect(bAnnonce.rows[0].n).toBe(0);
 
-    const admin = await client.query(`select count(*)::int as n from public.annonces`);
-    expect(admin.rows[0].n).toBe(1);
+    await setJwtUser(client, ACTEUR_A);
+    const aAnnonce = await client.query(
+      `select count(*)::int as n from public.annonces where id = $1`,
+      [ANNONCE_A],
+    );
+    expect(aAnnonce.rows[0].n).toBe(1);
+  });
+
+  it('ecritures : un membre non autorisé ne peut pas creer une annonce pour un acteur existant', async () => {
+    await setJwtUser(client, MEMBRE);
+    await expect(
+      client.query(
+        `insert into public.annonces (id, acteur_id, titre, contenu, langue, format, origine, statut, published_at)
+         values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', $1, 'Concert Interdit', 'Leary', 'pt', 'evenement', 'acteur', 'en_attente', null)`,
+        [FICHE_A],
+      ),
+    ).rejects.toThrow();
+  });
+
+  it('modifications : un acteur ne modifie pas une annonce dont il n’est pas le proprietaire', async () => {
+    await setJwtUser(client, ACTEUR_B);
+    await expect(
+      client.query(
+        `update public.annonces set titre = 'Hamecon Test' where id = $1`,
+        [ANNONCE_A],
+      ),
+    ).rejects.toThrow();
+
+    await setJwtUser(client, ACTEUR_A);
+    const aUpdate = await client.query(
+      `update public.annonces set titre = 'Concert Test' where id = $1`,
+      [ANNONCE_A],
+    );
+    expect(aUpdate.rowCount).toBeGreaterThanOrEqual(0);
+  });
+
+  it('suppressions : aucune policy delete n’est ouverte aux acteurs (deny par defaut)', async () => {
+    await setJwtUser(client, ADMIN);
+    await expect(
+      client.query(`delete from public.annonces where id = $1`, [ANNONCE_A]),
+    ).rejects.toThrow();
   });
 });
