@@ -25,7 +25,11 @@
 | P2.4 | Seed fictif PT/FR/EN | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; 5 villes, 6 catégories, données non personnelles |
 | P2.5 | Bucket d'images privé | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; upload non-image refusé, WebP accepté (test réel) |
 | **Gate G2** | Clôture P2 | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** |
-| P3 → P10 | — | `TODO` | — |
+| P3.1 | Inscription, connexion, vérification, réinitialisation | `VERIFYING` | Toutes les preuves produites le 2026-11-27 ; verdict `verifier` en attente |
+| P3.2 | Rôles et garde de routes | `TODO` | — |
+| P3.3 | Session sur mobile | `TODO` | Émulateur Android Studio à créer (AVD absent) |
+| P3.4 | Suppression de compte et export | `TODO` | — |
+| P4 → P10 | — | `TODO` | — |
 
 **Gate G0 : FRANCHIE le 2026-11-23** par validation humaine (« tu as le go »), avec **réserves** :
 Q7 (relecteur PT-AO non nommé), O4–O11 (Vercel, domaine, email, Turnstile, Sentry, package Android, CI), M12 (validation juridique).
@@ -791,6 +795,49 @@ Prochaine étape autorisée : P3 (authentification et rôles), conformément au 
 ```
 
 - **Prochaine étape autorisée :** P3 (authentification et rôles), conformément au second verdict indépendant inscrit ci-dessus.
+
+---
+
+## [P3.1] Inscription, connexion, vérification, réinitialisation
+
+- **Statut :** `VERIFYING` (une étape à la fois ; P3.2–P3.4 restent `TODO` jusqu'au verdict indépendant).
+- **Date :** 2026-11-27.
+- **Skills/agents appelés :** `frontend-builder`, `security-reviewer`, `design:ux-copy` (guide §6). Les skills dédiés ne sont pas installés dans cet environnement ; substitutions consignées : revue amont par sous-agents `security-reviewer` et `i18n-auditor`/`design:ux-copy`, relecture finale avant verdict. Aucun saut silencieux.
+- **Décisions humaines du 2026-11-27 (questions posées avant tout code) :**
+  1. **Turnstile (O7)** : intégration réelle avec les **clés de test publiques** de Cloudflare pour l'e2e ; clés production injectées par variables d'environnement avant mise en ligne, notées en réserve.
+  2. **Emails (O6)** : envoi par une **méthode PHP** (`scripts/mailer.php`) — bac à sable fichier pour l'e2e (liens de vérification/réinitialisation lisibles par les tests), SMTP configurable par variables d'environnement pour la production. Aucune clé ni adresse réelle dans le dépôt.
+  3. **Mobile (P3.3/O9)** : l'émulateur/Android Studio est à utiliser ; le SDK est présent mais aucun AVD n'existe. P3.3 restera `TODO` tant que P3.1 n'est pas `DONE` (ordre strict), puis l'AVD sera créé.
+- **Plan court :**
+  1. Ajouter la couche auth serveur (cookies `HttpOnly`/`SameSite`, `service_role` serveur uniquement) et cliente, sans exposer de secret.
+  2. Turnstile vérifié **côté serveur** (`siteverify`) sur inscription, connexion et demande de réinitialisation ; échec fermé si secret absent.
+  3. Parcours : inscription → lien de confirmation envoyé par PHP → consommation du jeton → session ; connexion ; demande de réinitialisation → lien par PHP → nouveau mot de passe ; déconnexion.
+  4. Rate limiting persistant (fenêtre temporelle en base, fonction `SECURITY DEFINER` au `search_path` figé), sans table sans RLS.
+  5. Écrans PT/FR/EN via clés i18n typées, états vides/chargement/erreur, DESIGN.md §8.6/§8.8.
+  6. Tests unitaires + e2e complets (cas interdits : inscription sans CAPTCHA, lien expiré, rôle non attribuable à l'inscription, session d'autrui).
+- **Livrables attendus :** `src/lib/auth/*`, `src/app/api/auth/*`, `src/app/(localized)/[locale]/(auth)/*`, `scripts/mailer.php`, migration `20261127130000_auth_rate_limit.sql`, clés i18n PT/FR/EN, tests.
+- **Livraison effective :** 18 écrans localisés statiques partageant la fabrique `src/components/auth/auth-page.tsx` (une page par langue et par écran), 7 handlers d'API, 11 helpers auth, 2 helpers mail, le transport PHP, 2 migrations, les clés i18n PT/FR/EN et les tests. Repli pris après deux tentatives infructueuses : une route dynamique `[authPage]` unique était ambiguë avec `[section]` sous Next 16 (`Ambiguous route pattern "/[*]/[*]"`). Les dossiers statiques suppriment l'ambiguïté ; aucune étape N+1 n'a été démarrée.
+- **Preuves (commandes réelles, 2026-11-27) :**
+
+| Contrôle | Commande | Résultat |
+|---|---|---|
+| Format | `npm run format:check` | `All matched files use Prettier code style!` |
+| Lint | `npm run lint` | exit `0`, aucune erreur |
+| Types | `npm run typecheck` | `tsc --noEmit`, exit `0` |
+| Unitaires | `npm test` | **112/112** (9 fichiers) |
+| RLS + stockage | `npm run test:rls` | **15/15** (dont `auth_rate_limits` : anon/authenticated refusés, `service_role` autorisé) |
+| Parcours | `npm run test:e2e` | **26/26** (dont 9 nouveaux : inscription → confirmation → connexion → déconnexion, réinitialisation avec lien du bac à sable, trois langues, 6 cas interdits) |
+| Build web | `npm run build:web` | exit `0`, **69** pages générées, API auth en `ƒ` |
+| Build mobile | `npm run build:mobile` | exit `0`, **11** pages générées ; les 18 écrans auth et l'API sont exclus de l'export statique (ADR-001 §5). Avertissement Next attendu : `headers` non appliqués à `output: export` |
+| Secrets | `npm run secrets` | `no leaks found` (36 commits) |
+| Dépendances | `npm run audit` | `found 0 vulnerabilities` |
+| Migrations | `npx supabase db push --remote --yes` | `Remote database is up to date.` |
+| Dry-run | `npx supabase db push --dry-run --remote` | `upToDate: true` |
+| État distant | `npx supabase migration list --remote` | **5/5** migrations locales = distantes (dont `20261127130000_auth_rate_limit`, `20261127130001_auth_hardening`) |
+
+- **Corrections apportées pendant la vérification (toutes rejouées) :** `getPublicEnv()` cite désormais chaque `NEXT_PUBLIC_*` littéralement (Next ne les remplaçait pas dans le bundle client) ; les clés de métadonnées ont été déplacées de la `.tsx` vers `src/lib/auth/page-copy.ts` pour satisfaire le garde-fou anti-texte-en-dur ; un marqueur `data-hydrated` sur le formulaire évite que Playwright remplisse le HTML serveur avant hydratation ; la clé secrète Turnstile de test `1x…` est distinguée de la clé invalide `0x…` (`invalid-input-secret`) et les contrôles `action`/`hostname` ne sont assouplis qu'avec une clé de test.
+- **Limites des preuves (à ne pas confondre avec une validation production) :** avec la clé de test Cloudflare, le e2e prouve le câblage de `siteverify`, **pas** le filtrage d'un vrai bot ; le mailer est prouvé en bac à sable fichier, **pas** contre un SMTP réel ; les en-têtes de sécurité sont actifs sur le web, pas dans l'export mobile statique. Réserves O5/O6/O7/O12/O13 toujours ouvertes avant P10.
+- **Substitution du verdict :** l'agent dédié `verifier` n'existe pas dans cet environnement (seuls `explore` et `general` sont disponibles) ; un sous-agent `general` neuf sera lancé uniquement pour le verdict indépendant, sans modifier le code. À défaut, le statut reste `VERIFYING` et la relecture humaine est requise.
+- **Verdict verifier :** en attente ; P3.1 ne sera pas marqué `DONE` par le constructeur.
 
 ---
 

@@ -309,4 +309,48 @@ describe('RLS — matrice anonyme / membre / acteur A / acteur B / éditeur / ad
     const del = await client.query(`delete from public.moderation_log where id = $1`, [LOG_A]);
     expect(del.rowCount).toBe(0);
   });
+
+  it('auth_rate_limits : aucune lecture ni écriture pour anon et authenticated', async () => {
+    const key = 'cle-hmac-de-test-auth-rate-limits';
+
+    await setAnonSession(client);
+    const anonRead = await client.query(
+      `select count(*)::int as n from public.auth_rate_limits where key = $1`,
+      [key],
+    );
+    expect(anonRead.rows[0].n).toBe(0);
+    await expect(
+      client.query(
+        `insert into public.auth_rate_limits (key, window_start, hits) values ($1, now(), 1)`,
+        [key],
+      ),
+    ).rejects.toThrow();
+    await expect(
+      client.query(`select public.cultura_auth_rate_limit($1, 5, 3600)`, [key]),
+    ).rejects.toThrow();
+
+    await setJwtUser(client, MEMBRE);
+    const memberRead = await client.query(
+      `select count(*)::int as n from public.auth_rate_limits where key = $1`,
+      [key],
+    );
+    expect(memberRead.rows[0].n).toBe(0);
+    await expect(
+      client.query(
+        `insert into public.auth_rate_limits (key, window_start, hits) values ($1, now(), 1)`,
+        [key],
+      ),
+    ).rejects.toThrow();
+    await expect(
+      client.query(`select public.cultura_auth_rate_limit($1, 5, 3600)`, [key]),
+    ).rejects.toThrow();
+
+    // Le rôle service_role (bypass RLS) est le seul à pouvoir consommer la RPC.
+    await resetRlsSession(client);
+    const rpc = await client.query(`select public.cultura_auth_rate_limit($1, 5, 3600) as ok`, [
+      key,
+    ]);
+    expect(rpc.rows[0].ok).toBe(true);
+    await client.query(`delete from public.auth_rate_limits where key = $1`, [key]);
+  });
 });
