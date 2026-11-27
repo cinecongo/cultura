@@ -687,7 +687,7 @@ Réserves :
 ## Prochaine action
 
 1. **Verdict indépendant de P1.5** — obtenu le 2026-11-26 : **VALIDÉ** (B1/B2 corrigés et prouvés par mesures ; N37–N39 traités). P1.2 est `DONE` depuis le verdict du 2026-11-25, confirmé le 2026-11-26.
-2. **P2** : **P2.1 livré** (`3262f45` — migration `20261127120000_init_cultura.sql` + types générés depuis le projet `cultura-dev`) ; **P2.2 livré** (`e7fd6d9` — politique RLS, cahier §10.3) ; **P2.3 lancé** (`69fb910` — harness `tests/rls` + client pg vers le pooler). Reste : **push des migrations** (après revue sécurité effectuée + validation humaine), puis tests RLS complets (P2.3), P2.4 seed, P2.5 stockage, gate G2.
+2. **P2** : **P2.1 livré** (`3262f45` — migration `20261127120000_init_cultura.sql` + types générés depuis le projet `cultura-dev`) ; **P2.2 livré** (`e7fd6d9` — politique RLS, cahier §10.3) ; **P2.3 lancé** (`69fb910` — harness `tests/rls` + client pg vers le pooler). Migrations poussées (`supabase db push --remote --yes`) après revue sécurité + validation humaine ; tests RLS lancés (`npm run test:rls`) — l’exécution a bien atteint la base migrée (vérif. CHECK `annonces_format_check`, policies). Reste : stabiliser les tests, P2.4 seed, P2.5 stockage, gate G2.
 3. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12).
 4. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
 
