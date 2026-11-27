@@ -610,6 +610,7 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
   - `supabase db push --dry-run --remote` → `upToDate: true`, `migrations: []`.
   - `supabase gen types typescript --linked` → fichier généré (converti UTF-16 → UTF-8), `typecheck` vert.
   - Base distante PostgreSQL **17.12**, **17 tables** dans `public`.
+  - **Correction du 2026-11-27 (refus B1) :** le fichier initial (133 lignes) avait été généré avant l'application effective du schéma et ne contenait que `{ [_ in never]: never }`. Régénération depuis la base appliquée → **584 lignes**, avec présence effective de `annonces`, `events`, `users`, `moderation_log`, etc. ; formatage Prettier, `typecheck` et `format:check` verts.
 - **Verdict verifier :** en attente (Gate G2).
 - **Dette :** aucune.
 
@@ -632,7 +633,7 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
   - `vues_quotidiennes` : RLS activée, 0 policy → denial par défaut (accès réservé au service).
   - **Écart contrôlé :** `get_advisors('security')` n'est **pas disponible** sur ce projet : RPC REST → `404 PGRST202` (fonction absente du schéma cache), aucune fonction `*advisor*` hors `pg_catalog`, endpoints Management API `/advisors` et `/database/lints` → 404. Substitution retenue : les contrôles `pg_catalog` ci-dessus, qui couvrent les deux critères vérifiables (« aucune table sans RLS », « aucune écriture ouverte »).
 - **Verdict verifier :** en attente (Gate G2).
-- **Dette :** `get_advisors` à relancer si Supabase réintroduit la fonction ; aucune alerte de sécurité détectée par substitution.
+- **Dette :** `get_advisors` à relancer si Supabase réintroduit la fonction ; aucune alerte de sécurité détectée par substitution. Triggers `BEFORE UPDATE` de défense en profondeur prévus par ADR-003 §2/§6 non posés : la contrainte est assurée par RLS et prouvée par tests (réserve R2 du verifier, non bloquante).
 
 ---
 
@@ -703,14 +704,56 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 
 | Critère | État | Preuve |
 |---|---|---|
-| P2.1 migrations appliquées sur projet vierge + types générés | Satisfait | `migration list` 3/3, dry-run à jour, types générés |
+| P2.1 migrations appliquées sur projet vierge + types générés | Satisfait après correction B1 | `migration list` 3/3, dry-run à jour, types régénérés en 584 lignes depuis la base appliquée |
 | P2.2 0 alerte sécurité, aucune table sans RLS | Satisfait par substitution | 17/17 RLS, `TABLES_SANS_RLS = []`, `ECRITURES_OUVERTES = []` ; `get_advisors` indisponible (documenté) |
 | P2.3 matrice rôles × CRUD, cas interdits verts | Satisfait | 14/14 tests distants |
 | P2.4 seed 5 villes + toutes catégories, aucune donnée réelle | Satisfait | comptages SQL ci-dessus |
 | P2.5 upload non-image refusé (test) | Satisfait | test d'upload réel, 3/3 |
 
-- **Verdict `verifier` :** à inscrire ici par l'agent indépendant, lui seul.
-- **Prochaine étape autorisée :** P3 (authentification et rôles) uniquement après verdict `VALIDÉ`.
+- **Verdict `verifier` — 2026-11-27 :**
+
+```text
+Étape : P2.1 → P2.5 — Gate G2 (clôture de P2)
+Verdict : REFUSÉ
+
+Commandes relancées (depuis C:\Users\KAYEMBE\Documents\CULTURA) :
+- npm run lint → exit 0, 0 erreur, 0 avertissement
+- npm run typecheck → exit 0, 0 erreur
+- npm run test → 97/97 tests passés (8 fichiers)
+- npm run test:rls → 14/14 tests passés (2 fichiers : 11 RLS + 3 stockage, 27,33 s)
+- npm run test:e2e → 17/17 tests passés (Edge, 47,8 s)
+- npm run build:web → exit 0, 11 pages générées
+- npm run build:mobile → exit 0, export statique dans out/ (index.html et 404.html présents) ; lancé APRÈS build:web, jamais en parallèle (.next partagé)
+- npm run secrets → no leaks found (33 commits, ~1,26 Mo scannés)
+- npm run audit → found 0 vulnerabilities
+- npm run format:check → conforme
+- supabase migration list --remote → 3 entrées locales = 3 entrées distantes (20261127120000, …0001, …0002), projet exsemqskhkgfsogdtvpz
+- supabase db push --dry-run --remote → upToDate: true, migrations: [], « Remote database is up to date. »
+- Contrôle pg_catalog relancé en lecture seule via pooler → 17/17 tables avec rowsecurity = true, ecritures_ouvertes = 0, 0 policy UPDATE/DELETE sur moderation_log ; seed intact : 5 villes distinctes, 6 catégories, 5 fiches, 6 annonces, 5 événements
+- Aucune valeur secrète n'a été affichée ni écrite : jeton CLI et mot de passe base injectés uniquement par affectations PowerShell depuis .env.local ; scripts de test chargés par leur propre loadEnv()
+
+Critères d'acceptation : 4/5 (P2.1 insatisfait ; P2.2 satisfaction par substitution acceptée, P2.3/P2.4/P2.5 satisfaits)
+
+Motifs de refus / réserves :
+- B1 — BLOQUANT (P2.1) : `src/lib/supabase/types.ts` est un fichier de 133 lignes dont `public.Tables`, `public.Views` et `public.Functions` valent `{ [_ in never]: never }` : aucune des 17 tables distantes n'y figure (0 occurrence de `annonces`, `events`, `users`, `moderation_log`, etc.). Le fichier n'a été produit qu'une seule fois, au commit `3262f45`, avant que le schéma ne soit effectivement appliqué ; la commande `supabase gen types typescript --linked` relancée par le verifier contre le projet courant produit 584 lignes contenant toutes les tables. La preuve du journal (« fichier généré, typecheck vert ») est donc trompeuse : `typecheck` passe parce que le fichier est vide, non parce qu'il décrit le schéma. Le critère « types TypeScript générés » n'est pas satisfait. Correctif attendu du constructeur : régénérer les types depuis la base appliquée, les formater, revérifier typecheck/format, puis relancer TOUTES les vérifications de l'étape et demander un nouveau verdict.
+- R1 — réserve, non bloquante (P2.2) : `get_advisors('security')` reste indisponible (RPC 404 `PGRST202`, aucune fonction *advisor* hors `pg_catalog`, endpoints Management API 404). La substitution par contrôles `pg_catalog` est jugée acceptable au regard du critère : elle prouve les deux points vérifiables (« aucune table sans RLS », « aucune écriture ouverte »), l'indisponibilité est documentée avec des sorties réelles et la RLS est confirmée par 14 tests distants. Risque résiduel : les alertes propres aux advisors ne sont pas couvertes ; à relancer si la fonction réapparaît.
+- R2 — réserve, non bloquante (ADR-003 §2 et §6) : aucun trigger `BEFORE UPDATE` de défense en profondeur sur `users.role` ni trigger d'immutabilité sur `moderation_log`. Le guide §7.2 admet une politique dédiée pour le rôle et l'absence de politique UPDATE/DELETE pour le journal ; les tests prouvent le refus effectif pour l'éditeur/le membre et l'immutabilité en RLS. Écart d'implémentation par rapport à l'ADR, pas un refus en soi.
+- R3 — réserve, non bloquante (ordre des étapes) : P2 est bien la prochaine étape (G0 franchie par l'humain, P1.2–P1.5 `DONE`). P0.1–P0.4 et P1.1 restent `VERIFYING` faute de verdict indépendant (auto-contrôle non indépendant déjà consigné) : dette ancienne, non aggravée par P2. Aucune étape sautée, aucune fonctionnalité P3+ codée « en préparation » : le diff `7682575..HEAD` ne touche que migrations, seed, types générés, tests et documentation. Substitutions de skills consignées, aucun test supprimé ni affaibli (`git diff --numstat` sur `tests/` : 312/0, 102/0, 81/0 ; aucun `.skip`/`.only`). Aucun texte d'interface ajouté en dur (aucune modification de `src/` UI), i18n existante intacte.
+
+Statut inscrit dans PROGRESS.md : VERIFYING — P2.1 à P2.5 et Gate G2 conservés en VERIFYING ; aucun statut DONE posé par ce verdict.
+
+Prochaine étape autorisée : aucune. Retour en implémentation sur P2.1 uniquement (types générés réels), puis rejeu intégral des vérifications et nouveau verdict de Gate G2. P3 (authentification et rôles) reste fermée.
+```
+### Traitement du refus du 2026-11-27 (constructeur)
+
+| Réf. | Constat | Traitement |
+|---|---|---|
+| B1 (bloquant) | Types générés vides (133 lignes, 0 table) | Régénération depuis le projet appliqué : 584 lignes, 17 tables décrites ; Prettier, `typecheck` et `format:check` verts. Toutes les vérifications de l'étape sont relancées avant le nouveau verdict. |
+| R1 (réserve) | `get_advisors` indisponible | Substitution acceptée par le `verifier`, maintenue ; risque résiduel consigné. |
+| R2 (réserve) | Triggers de défense en profondeur absents (`users.role`, `moderation_log`) | Non bloquant : RLS prouvée par tests ; dette à arbitrer en P3/P5, pas de modification du schéma P2. |
+| R3 (réserve) | Verdicts P0.1–P0.4 / P1.1 encore en attente | Dette ancienne, non aggravée ; aucun saut d'étape. |
+
+- **Prochaine étape autorisée :** aucune tant que le second verdict du `verifier` n'est pas inscrit ; P3 (authentification et rôles) reste fermée.
 
 ---
 
