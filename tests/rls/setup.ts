@@ -9,6 +9,11 @@ import { join } from 'node:path';
  * voir DECISIONS/ADR-006). Les politiques RLS lisent l'utilisateur via
  * `auth.uid()`, qui dérive de la GUC `request.jwt.claims` : on y injecte le
  * `sub` du compte testé avant chaque requête.
+ *
+ * Le rôle `postgres.<ref>` porte `rolbypassrls=true` (mesuré sur `cultura-dev`),
+ * ce qui neutralise toute évaluation de RLS. On bascule donc via `set role` sur
+ * le rôle `authenticated` (membre de `postgres`, `rolbypassrls=false`) pour que
+ * les policies soient réellement pris en compte.
  */
 
 const ENV_FILE = join(process.cwd(), '.env.local');
@@ -59,12 +64,22 @@ export async function createRlsClient(): Promise<Client> {
   return client;
 }
 
+/**
+ * Active l'évaluation RLS sur le client : le rôle `postgres.<ref>` biaisé
+ * (`rolbypassrls=true`) est temporairement remplacé par le rôle `authenticated`
+ * (membre de `postgres`, `rolbypassrls=false`) pour que les policies s'appliquent.
+ */
+export async function enableRlsSession(client: Client): Promise<void> {
+  await client.query('set role authenticated');
+}
+
 export async function setJwtUser(client: Client, uid: string): Promise<void> {
   if (!isUuid(uid)) {
     throw new Error('uid invalide pour le JWT de test');
   }
-  const payload = JSON.stringify({ sub: uid });
-  await client.query(`select set_config('request.jwt.claims', '${payload}', false)`);
+  await client.query("select set_config('request.jwt.claims', $1, false)", [
+    JSON.stringify({ sub: uid }),
+  ]);
 }
 
 export async function closeRlsClient(client: Client): Promise<void> {
