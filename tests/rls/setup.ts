@@ -5,7 +5,7 @@ import { join } from 'node:path';
 /**
  * Client de test pour la politique RLS (P2.3).
  *
- * Construit une connexion au pooler Supabase `cultura-dev` (pas de Docker :
+ * Construit une connexion au pooler Supabase du projet courant (pas de Docker :
  * voir DECISIONS/ADR-006). Les politiques RLS lisent l'utilisateur via
  * `auth.uid()`, qui dérive de la GUC `request.jwt.claims` : on y injecte le
  * `sub` du compte testé avant chaque requête.
@@ -77,9 +77,24 @@ export async function setJwtUser(client: Client, uid: string): Promise<void> {
   if (!isUuid(uid)) {
     throw new Error('uid invalide pour le JWT de test');
   }
+  // `reset role` garantit que la bascule fonctionne aussi après un test anonyme.
+  await client.query('reset role');
+  await client.query('set role authenticated');
   await client.query("select set_config('request.jwt.claims', $1, false)", [
     JSON.stringify({ sub: uid }),
   ]);
+}
+
+/** Session anonyme : rôle `anon`, sans `sub` dans les claims JWT. */
+export async function setAnonSession(client: Client): Promise<void> {
+  await client.query('reset role');
+  await client.query("select set_config('request.jwt.claims', $1, false)", ['{}']);
+  await client.query('set role anon');
+}
+
+/** Reviens au rôle de connexion (`bypassrls`) pour le nettoyage. */
+export async function resetRlsSession(client: Client): Promise<void> {
+  await client.query('reset role');
 }
 
 export async function closeRlsClient(client: Client): Promise<void> {
