@@ -823,12 +823,13 @@ Prochaine étape autorisée : P3 (authentification et rôles), conformément au 
 | Format | `npm run format:check` | `All matched files use Prettier code style!` |
 | Lint | `npm run lint` | exit `0`, aucune erreur |
 | Types | `npm run typecheck` | `tsc --noEmit`, exit `0` |
-| Unitaires | `npm test` | **112/112** (9 fichiers) |
+| Unitaires | `npm test` | **113/113** (9 fichiers), après correction ; 112/112 avant le refus |
 | RLS + stockage | `npm run test:rls` | **15/15** (dont `auth_rate_limits` : anon/authenticated refusés, `service_role` autorisé) |
-| Parcours | `npm run test:e2e` | **26/26** (dont 9 nouveaux : inscription → confirmation → connexion → déconnexion, réinitialisation avec lien du bac à sable, trois langues, 6 cas interdits) |
-| Build web | `npm run build:web` | exit `0`, **69** pages générées, API auth en `ƒ` |
+| Parcours | `npm run test:e2e` | **27/27** après correction (26/26 avant le refus) : inscription → confirmation → connexion → déconnexion, réinitialisation avec lien du bac à sable, page `/en/account`, trois langues, 6 cas interdits |
+| Build web | `npm run build:web` | exit `0`, **72** entrées générées (69 avant correction), dont `ƒ /[locale]/account` ; API auth en `ƒ` |
 | Build mobile | `npm run build:mobile` | exit `0`, **11** pages générées ; les 18 écrans auth et l'API sont exclus de l'export statique (ADR-001 §5). Avertissement Next attendu : `headers` non appliqués à `output: export` |
-| Secrets | `npm run secrets` | `no leaks found` (36 commits) |
+| Secrets | `npm run secrets` | `no leaks found` (39 commits) ; hook pré-commit également vert |
+| PHP | `php -l scripts/mailer.php` (PHP portable 8.4.28) | `No syntax errors detected` |
 | Dépendances | `npm run audit` | `found 0 vulnerabilities` |
 | Migrations | `npx supabase db push --remote --yes` | `Remote database is up to date.` |
 | Dry-run | `npx supabase db push --dry-run --remote` | `upToDate: true` |
@@ -837,7 +838,14 @@ Prochaine étape autorisée : P3 (authentification et rôles), conformément au 
 - **Corrections apportées pendant la vérification (toutes rejouées) :** `getPublicEnv()` cite désormais chaque `NEXT_PUBLIC_*` littéralement (Next ne les remplaçait pas dans le bundle client) ; les clés de métadonnées ont été déplacées de la `.tsx` vers `src/lib/auth/page-copy.ts` pour satisfaire le garde-fou anti-texte-en-dur ; un marqueur `data-hydrated` sur le formulaire évite que Playwright remplisse le HTML serveur avant hydratation ; la clé secrète Turnstile de test `1x…` est distinguée de la clé invalide `0x…` (`invalid-input-secret`) et les contrôles `action`/`hostname` ne sont assouplis qu'avec une clé de test.
 - **Limites des preuves (à ne pas confondre avec une validation production) :** avec la clé de test Cloudflare, le e2e prouve le câblage de `siteverify`, **pas** le filtrage d'un vrai bot ; le mailer est prouvé en bac à sable fichier, **pas** contre un SMTP réel ; les en-têtes de sécurité sont actifs sur le web, pas dans l'export mobile statique. Réserves O5/O6/O7/O12/O13 toujours ouvertes avant P10.
 - **Substitution du verdict :** l'agent dédié `verifier` n'existe pas dans cet environnement (seuls `explore` et `general` sont disponibles) ; un sous-agent `general` neuf sera lancé uniquement pour le verdict indépendant, sans modifier le code. À défaut, le statut reste `VERIFYING` et la relecture humaine est requise.
-- **Verdict verifier :** en attente ; P3.1 ne sera pas marqué `DONE` par le constructeur.
+- **Verdict verifier (2026-11-27, premier passage) : `REFUSÉ`.** Le sous-agent `general` neuf a rejoué les douze commandes (toutes vertes : 112/112, 15/15, 26/26, builds OK, secrets/audit OK, 5/5 migrations, dry-run à jour) et a trouvé un bloquant que nos preuves n'avaient pas détecté : **B1 — `/en/account` renvoyait 404**. La table de routes produisait bien `/en/account`, mais le dossier physique manquait (17 écrans au lieu de 18) ; après connexion en anglais, `AuthForm` redirigeait vers une page inexistante. Le test e2e des trois langues ne couvrait que `/pt/criarconta`, `/fr/connexion` et `/en/signin`. Les bloquants amont B1–B4 (Turnstile, élévation de privilège, mailer, origine/redirections), la RLS de `auth_rate_limits` et la relecture du rôle en base ont été contrôlés `TRAITÉS`. Le verifier a aussi signalé, **hors bloquant**, un défaut SMTP non testé : `scripts/mailer.php` ne consommait que la première ligne de la réponse EHLO, ce qui pouvait faire échouer `AUTH LOGIN` face à un serveur standard.
+- **Corrections apportées après le refus (2026-11-27) :**
+  1. Création de `src/app/(localized)/[locale]/(auth)/account/page.web.tsx` (`NAME = 'account'`, `SEGMENT = 'account'`) → 18 écrans localisés complets.
+  2. Nouveau test unitaire dans `tests/routes.test.ts` : pour les trois langues et les six écrans auth, le fichier `page.web.tsx` correspondant au segment canonique doit exister. Un trou de ce type ne peut plus passer inaperçu.
+  3. Nouveau test e2e : `/en/account` affiche le garde-fou « Sign in to continue » avec un lien vers la connexion.
+  4. `scripts/mailer.php::smtpCommand()` consomme désormais toutes les lignes de continuation `250-…` d'une réponse SMTP multiligne, avec une borne de 32 lignes, avant d'envoyer `AUTH LOGIN`.
+- **Action obligatoire après correction :** toutes les vérifications ont été rejouées intégralement le 2026-11-27 : format OK, lint 0, typecheck 0, **113/113** unitaires, **15/15** RLS+stockage, **27/27** e2e, build web **72** entrées, build mobile 11 pages, `php -l` OK, `no leaks found`, `0 vulnerabilities`, migrations 5/5 et dry-run `upToDate`. Un **nouveau verifier neuf** est demandé. Le premier verdict reste consigné ; aucun `DONE` n'est écrit par le constructeur.
+- **Verdict verifier final :** en attente du second passage ; P3.1 reste `VERIFYING`.
 
 ---
 
