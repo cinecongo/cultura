@@ -28,7 +28,7 @@
 | P3.1 | Inscription, connexion, vérification, réinitialisation | `DONE` | Premier verdict `REFUSÉ` (`/en/account` 404) corrigé ; second verdict `VALIDÉ` le 2026-11-27 ; prochaine étape P3.2 |
 | P3.2 | Rôles et garde de routes | `DONE` | **VALIDÉ par le verifier indépendant le 2026-11-27** (commit `9d7003c`) ; Gate G3 reste ouvert jusqu'à P3.4 |
 | P3.3 | Session sur mobile | `TODO` | Émulateur Android Studio à créer (AVD absent) |
-| P3.4 | Suppression de compte et export | `IN_PROGRESS` | Implémentation terminée et vérifiée le 2026-11-27 ; revue indépendante et verdict en attente |
+| P3.4 | Suppression de compte et export | `DONE` | **VALIDÉ par le verifier indépendant le 2026-11-27** (session `ses_de0f94ec9ffeTvDnsuUTxMxKq6`) ; 131/131, 20/20 RLS, 35/35 e2e, builds/secrets/audit verts, RPC distante vérifiée, dry-run à jour, commit `2fc8c7f` ; P3.3 reste `TODO` (AVD absent) |
 | P4 → P10 | — | `TODO` | — |
 
 **Gate G0 : FRANCHIE le 2026-11-23** par validation humaine (« tu as le go »), avec **réserves** :
@@ -894,7 +894,7 @@ Prochaine étape autorisée : P3 (authentification et rôles), conformément au 
 
 ## [P3.4] Suppression de compte et export
 
-- **Statut :** `IN_PROGRESS` — implémentation terminée, revue de code indépendante reçue et ses deux bloquants corrigés le 2026-11-27 ; en attente du verdict `verifier`. Gate G3 non franchi, P3.3 reste `TODO`.
+- **Statut :** `DONE` — **verdict `VALIDÉ` rendu le 2026-11-27 par le verifier indépendant** après rejeu complet des commandes (131/131, 20/20 RLS, 35/35 e2e, deux builds, secrets, audit, RPC distante vérifiée, `dry-run` `upToDate`, arbre propre au commit `2fc8c7f`). P3.3 reste `TODO` (AVD Android Studio absent) ; Gate G3 demeure ouvert.
 - **Critère du guide :** « Compte et données supprimés ; test vérifiant l'absence de reliquats. » Guide §7.4 : suppression en libre-service **et** export des données personnelles.
 - **Agents/skills appelés :** `db-security`, `frontend-builder`, `security-reviewer`, `design:ux-copy`, `qa-tester`, puis `verifier`. Skills indisponibles dans cet environnement (seuls `explore` et `general` existent) ; substitution consignée : cartographie `explore` en amont, revues amont `general` en lecture seule (sécurité, i18n, SQL), revue de code indépendante (`general`, lecture seule, session `ses_de11f9f5fffeWM53wtdCu0Y6HI`) puis verifier neuf. `engineering:code-review` et `engineering:testing-strategy` → checklists des agents `qa-tester`/`verifier`. Aucun saut silencieux.
 - **Décisions tranchées par l'utilisateur (2026-11-27) :**
@@ -927,7 +927,28 @@ Prochaine étape autorisée : P3 (authentification et rôles), conformément au 
   - `npm run secrets` : `no leaks found` (44 commits) ; `npm run audit` : `found 0 vulnerabilities`.
   - Parité i18n : 144 clés strictement égales en PT/FR/EN, vérifiée par `tests/i18n.test.ts` dans les 131 tests.
 - **Dettes et réserves non bloquantes :** clés HMAC dérivées d'une IP non purgées ; `x-forwarded-for` contournable (déjà dans `BACKLOG.md`) ; comptes de test journalisés conservés par design ; objets storage supprimés par liste exacte (aucun listing récursif).
-- **Verdict verifier :** en attente ; P3.4 ne sera pas marqué `DONE` par le constructeur. Gate G3 ne sera franchi qu'après verdict `VALIDÉ`.
+- **Verdict verifier :** **VALIDÉ** le 2026-11-27 par le verifier indépendant (session `ses_de0f94ec9ffeTvDnsuUTxMxKq6`). Preuves exécutées par le verifier : `git status -sb` (`## main...origin/main`, `HEAD = origin/main = 2fc8c7f`, 4 commits P3.4 poussés), `npm run format:check` conforme, `npm run lint` 0 erreur, `npm run typecheck` 0 erreur, `npm test` **131/131**, `npm run test:rls` **20/20**, `npm run test:e2e` **35/35**, `npm run build:web` / `npm run build:mobile` exit 0, `npm run secrets` `no leaks found` (48 commits), `npm run audit` `found 0 vulnerabilities`, `git diff --check` propre ; RPC distante : `pg_get_functiondef` contient `lower(trim(contact)) = lower(trim(p_email))` et non `position(lower(trim(p_email)) in lower(contact))`, `content_type` filtré par type, `prosecdef = true`, `search_path = ""`, `EXECUTE` à `service_role` (hors `PUBLIC`/`anon`/`authenticated`), `moderation_log` insertion seule ; `npx supabase db push --dry-run --remote` `upToDate: true`. Trois constats non bloquants : (1) `src/lib/account/data.ts:165` compare `contact` par égalité stricte `.eq('contact', email)` et non normalisée (`lower`/`trim`) comme la RPC — aucun tiers ne peut être inclus, mais une demande propre à casse/espaces différents pourrait être supprimée sans apparaître à l'export (corrective : normaliser `contact` à l'écriture ou comparer via une fonction SQL normalisée) ; (2) `src/lib/account/delete-phrase.ts:10` cite `tests/i18n.test.ts` alors que le test d'égalité est dans `tests/account-deletion.test.ts:43` ; (3) overlay `Unexpected end of JSON input` au premier compile Turbopack, absorbé par le retry configuré dans `playwright.config.ts:42-46` (0 échec).
+
+---
+
+## Verdict indépendant du 2026-11-27 (verifier — P3.4)
+
+Session : `ses_de0f94ec9ffeTvDnsuUTxMxKq6`. Verdict : **VALIDÉ**. Aucun bloquant ; trois constats non bloquants détaillés dans la section `[P3.4]`.
+
+| Contrôle | Résultat exécuté |
+|---|---|
+| `git status -sb` / `git log --oneline -5` | `## main...origin/main`, arbre propre ; `HEAD = origin/main = 2fc8c7f` ; 4 commits P3.4 (`19f3c29`, `1d3b463`, `67e1221`, `2fc8c7f`) |
+| `npm run format:check` | « All matched files use Prettier code style! » |
+| `npm run lint` / `npm run typecheck` | 0 erreur / 0 erreur |
+| `npm test` | **131/131** (11 fichiers) |
+| `npm run test:rls` | **20/20** (3 fichiers, 35,96 s) |
+| `npm run test:e2e` | **35/35** (2,5 min, 2 workers, 1 retry absorbant l'overlay du premier compile Turbopack) |
+| `npm run build:web` / `npm run build:mobile` | exit 0 ; handlers `/api/account/{export,delete}` sur le web, aucun handler mobile |
+| `npm run secrets` / `npm run audit` | `no leaks found` (48 commits) / `found 0 vulnerabilities` |
+| RPC distante (client `pg`, secret non affiché) | `pg_get_functiondef` : `lower(trim(contact)) = lower(trim(p_email))` présent, `position(lower(trim(p_email)) in lower(contact))` absent, `content_type` filtré par type ; `prosecdef = true`, `proconfig = ["search_path=\"\""]` ; `EXECUTE` : `service_role` (et `postgres`, propriétaire implicite), aucun `PUBLIC`/`anon`/`authenticated` ; `moderation_log` : 1 policy `INSERT`, 0 `UPDATE`/`DELETE` |
+| `npx supabase db push --dry-run --remote` | `{"upToDate":true,"migrations":[]}`, cible `exsemqskhkgfsogdtvpz` |
+| i18n / vocabulaire | **144 clés** identiques PT/FR/EN ; zéro texte en dur (scan AST) ; termes interdits absents |
+| Sécurité supplémentaire | `service_role` serveur uniquement (`env.server.ts`, `clients.ts`, `import 'server-only'`) ; garde-fou journal avant toute écriture ; migrations non destructives ; `git diff --check` propre |
 
 ---
 
@@ -960,6 +981,7 @@ Prochaine étape autorisée : P3 (authentification et rôles), conformément au 
 | ADR-004 | Données, mutations, pagination, score | **Accepté** (revue `db-security` à faire en P2) | 2026-11-23 |
 | ADR-005 | Migrations Supabase en ligne, sans Docker | **Accepté** | 2026-11-27 |
 | ADR-006 | Connexion base par pooler, sauvegardes sans Docker | **Accepté** | 2026-11-27 |
+| ADR-007 | Suppression de compte et export des données | **Accepté** (durci après revue indépendante, verdict P3.4 `VALIDÉ`) | 2026-11-27 |
 | DESIGN.md | Identité et composants | **Validé** (v0.2) | 2026-11-23 |
 
 ---
@@ -1031,9 +1053,10 @@ Réserves :
 1. **Verdict indépendant de P1.5** — obtenu le 2026-11-26 : **VALIDÉ** (B1/B2 corrigés et prouvés par mesures ; N37–N39 traités). P1.2 est `DONE` depuis le verdict du 2026-11-25, confirmé le 2026-11-26.
 2. **P2** : cinq étapes livrées et documentées individuellement ci-dessus (schéma, RLS, matrice de tests, seed, stockage). **Gate G2 `DONE` — VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; P3 est ouverte. Tout est appliqué en ligne, sans Docker ; migrations remote 3/3, dry-run à jour, 14/14 tests distants, seed intact.
 3. **P3.1 `DONE` — second verdict `VALIDÉ` le 2026-11-27** (premier refus corrigé : `/en/account` 404). 113/113 unitaires, 15/15 RLS, 27/27 e2e, builds OK, secrets/audit OK, 5/5 migrations.
-4. **P3.2 `DONE` — verdict indépendant `VALIDÉ` le 2026-11-27** (commit `9d7003c`). 125/125 unitaires, 15/15 RLS, 30/30 e2e, builds OK, secrets/audit OK, 5/5 migrations. **Gate G3 reste ouvert jusqu'à P3.4** ; P3.3 dépend d'un AVD Android Studio absent de cet environnement.
-5. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12), rotation O12, vraies clés Turnstile (O7), SMTP réel (O6).
-6. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
+4. **P3.2 `DONE` — verdict indépendant `VALIDÉ` le 2026-11-27** (commit `9d7003c`). 125/125 unitaires, 15/15 RLS, 30/30 e2e, builds OK, secrets/audit OK, 5/5 migrations.
+5. **P3.4 `DONE` — verdict indépendant `VALIDÉ` le 2026-11-27** (commits `19f3c29`, `1d3b463`, `67e1221`, `2fc8c7f`). 131/131 unitaires, 20/20 RLS, 35/35 e2e, builds OK, secrets/audit OK, migrations 7/7 appliquées et dry-run à jour. **Gate G3 reste ouvert** : P3.3 (session mobile) dépend d'un AVD Android Studio absent de cet environnement.
+6. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12), rotation O12, vraies clés Turnstile (O7), SMTP réel (O6).
+7. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
 
 ---
 
