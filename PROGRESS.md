@@ -28,7 +28,7 @@
 | P3.1 | Inscription, connexion, vérification, réinitialisation | `DONE` | Premier verdict `REFUSÉ` (`/en/account` 404) corrigé ; second verdict `VALIDÉ` le 2026-11-27 ; prochaine étape P3.2 |
 | P3.2 | Rôles et garde de routes | `DONE` | **VALIDÉ par le verifier indépendant le 2026-11-27** (commit `9d7003c`) ; Gate G3 reste ouvert jusqu'à P3.4 |
 | P3.3 | Session sur mobile | `TODO` | Émulateur Android Studio à créer (AVD absent) |
-| P3.4 | Suppression de compte et export | `TODO` | — |
+| P3.4 | Suppression de compte et export | `IN_PROGRESS` | Implémentation terminée et vérifiée le 2026-11-27 ; revue indépendante et verdict en attente |
 | P4 → P10 | — | `TODO` | — |
 
 **Gate G0 : FRANCHIE le 2026-11-23** par validation humaine (« tu as le go »), avec **réserves** :
@@ -888,7 +888,46 @@ Prochaine étape autorisée : P3 (authentification et rôles), conformément au 
 - **Non applicable :** `php -l scripts/mailer.php` (aucun fichier PHP modifié en P3.2 ; l'exécutable `php` n'est d'ailleurs plus sur le PATH de ce shell). Le mailer reste inchangé et déjà validé en P3.1.
 - **Verdict verifier (2026-11-27) : `VALIDÉ`, aucun bloquant.** Un sous-agent `general` neuf, sans lien avec le constructeur, en lecture seule, a rejoué sur `9d7003c` (arbre propre, `HEAD = origin/main`) : format/lint/typecheck 0, **125/125** unitaires, **15/15** RLS+stockage, **30/30** e2e, builds web (6 pages et API en `ƒ`) et mobile (11 pages, `out/` sans page gardée ni handler API), `no leaks found` (43 commits), audit 0, migrations 5/5 et dry-run `upToDate`, 126 clés i18n PT/FR/EN, 0 `.skip`/`.only`. Il a en plus contrôlé la source du rôle (base uniquement, zod strict), les métadonnées de refus (`meta.guard.*`), l'ordre zod → limitation → décision de l'API et les en-têtes, l'absence de `proxy.ts`, de migration, de `dangerouslySetInnerHTML`, de route de test en production et de secret dans le diff, la non-affaiblissement des tests, la redirection anonyme sans `?next` et le vocabulaire imposé. Le verifier n'a écrit aucun `DONE` et n'a rien modifié ; le présent `DONE` est consigné par le constructeur **uniquement sur la base de son verdict**.
 - **Réserve non bloquante (déjà présente avant P3.2) :** `clientIp()` accepte l'en-tête `x-forwarded-for` fourni par le client, ce qui rend la limitation de débit contournable par rotation d'en-tête ; impact faible sur une sonde qui ne renvoie qu'un booléen. À traiter hors P3.2, sans bloquer Gate G3.
-- **Suite :** Gate G3 reste ouvert jusqu'à P3.4 ; P3.3 (session mobile, AVD absent) et P3.4 restent `TODO`.
+- **Suite :** Gate G3 reste ouvert jusqu'à P3.4 ; P3.3 (session mobile, AVD absent) reste `TODO`.
+
+---
+
+## [P3.4] Suppression de compte et export
+
+- **Statut :** `IN_PROGRESS` — implémentation terminée, revue de code indépendante reçue et ses deux bloquants corrigés le 2026-11-27 ; en attente du verdict `verifier`. Gate G3 non franchi, P3.3 reste `TODO`.
+- **Critère du guide :** « Compte et données supprimés ; test vérifiant l'absence de reliquats. » Guide §7.4 : suppression en libre-service **et** export des données personnelles.
+- **Agents/skills appelés :** `db-security`, `frontend-builder`, `security-reviewer`, `design:ux-copy`, `qa-tester`, puis `verifier`. Skills indisponibles dans cet environnement (seuls `explore` et `general` existent) ; substitution consignée : cartographie `explore` en amont, revues amont `general` en lecture seule (sécurité, i18n, SQL), revue de code indépendante (`general`, lecture seule, session `ses_de11f9f5fffeWM53wtdCu0Y6HI`) puis verifier neuf. `engineering:code-review` et `engineering:testing-strategy` → checklists des agents `qa-tester`/`verifier`. Aucun saut silencieux.
+- **Décisions tranchées par l'utilisateur (2026-11-27) :**
+  1. **Export : toutes les données liées au compte** au format JSON (profil, fiches possédées, annonces et événements créés, interactions, villes suivies, revendications, signalements) — pas seulement le profil.
+  2. **Contenus publiés supprimés avec le compte**, sans reliquat ; cette décision remplace la recommandation M2 de `QUESTIONS.md` (fiche conservée), qui est donc tranchée.
+  3. **Confirmation forte : mot de passe courant revérifié côté serveur + phrase explicite traduite** avant suppression définitive.
+  4. Un compte `editeur`/`admin` **référencé dans `moderation_log.admin_id` refuse la suppression** avec un message i18n : le journal reste insertion seule.
+  5. **Arbitrage du 2026-11-27 (revue SQL) :** la policy RLS préexistante `users_delete_admin` est conservée (gestion des comptes par l'équipe Cultura) ; aucune politique n'est modifiée en P3.4.
+  6. **Arbitrage du 2026-11-27 (revue SQL) :** les `content_id` historiques du journal ne bloquent pas la suppression ; seul `admin_id` est un garde-fou.
+- **Ajustements au plan après revue amont (2026-11-27) :** la RPC prend `p_user_id`/`p_email` fournis par le handler (une fonction sans paramètre lue via `auth.uid()` aurait dû être exécutable par `authenticated`, contournant mot de passe et origine) ; elle ne supprime pas `public.users` (cascade d'`auth.admin.deleteUser`) ; `search_path = ''`, verrous `FOR UPDATE`/advisory lock et contrôle final « zéro reliquat » ; l'export passe en POST avec contrôle d'origine. Voir `DECISIONS/ADR-007`.
+- **Réalisations :**
+  1. Migration `20261127140000_account_deletion.sql` appliquée en ligne (cible vérifiée, dry-run, sauvegarde JSON native hors dépôt avant `push` car `pg_dump` absent — ADR-005).
+  2. `src/lib/account/` (phrase serveur, collecte des données, normalisation des chemins storage, purge des clés HMAC) ; `src/app/api/account/{export,delete}/route.web.ts` ; extension de la page compte avec `AccountData` (export, confirmation inline, focus, cibles ≥ 44 px, `aria-*`, états).
+  3. 18 clés i18n ajoutées aux trois catalogues (126 → 144), `meta.account.*` ajouté et `AUTH_META.account` corrigé ; glossaire mis à jour.
+  4. Types Supabase régénérés (`supabase gen types typescript --remote`), la RPC apparaît dans `Database.public.Functions`.
+  5. **Revue de code indépendante (2026-11-27) — deux bloquants corrigés puis rejoués :**
+     - `demandes_retrait` : la correspondance par sous-chaîne (`position(email in contact)`) pouvait exporter/supprimer une demande tierce dont l'adresse contient celle du compte ; remplacée par une égalité normalisée `lower(trim(contact)) = lower(trim(p_email))` dans la RPC (`20261127150000_account_deletion_hardening.sql`, migration corrective approuvée puis appliquée) et dans `collectAccountData` (`.eq('contact', email)`) ; les IDs polymorphes sont désormais filtrés par `content_type`. Nouveaux tests : RLS sur `pg_get_functiondef`, e2e avec `contact = 'prefix.' + email` et `content_id` tiers (ni exporté, ni supprimé).
+     - `normalizeStoragePath` : une URL absolue d'un hôte tiers contenant `/object/public/cultura-media/…` pouvait désigner un objet du bucket ; l'origine du projet Supabase est désormais exigée (`allowedOrigin`, défaut refuse toute URL absolue). Nouveau test unitaire avec `hote-tier.test`.
+     - Observations non bloquantes traitées : garde-fou `moderation_log` déplacé **avant** toute écriture (y compris la limitation), commentaire de `delete-phrase.ts` clarifié, délai Vitest porté à 30 s pour la latence du pooler distant. Un test e2e flaky sur l'attente du message d'inscription (5 s) a conduit à porter le délai `expect` Playwright à 15 s ; le mot de passe invalide littéral, pris pour une clé par gitleaks, est désormais dérivé du mot de passe de test. Dernière exécution e2e : **35/35, aucun flaky**.
+- **Preuves (commandes réellement exécutées le 2026-11-27) :**
+  - `npx supabase db push --dry-run --remote` : cible `exsemqskhkgfsogdtvpz`, migrations uniques proposées avant chaque application ; après application : `upToDate: true`.
+  - Sauvegardes hors dépôt : `backup ok — 18 tables, 18 jeux de lignes` (`…\cultura-avant-p3.4.json` puis `…\cultura-avant-hardening-p3.4.json`).
+  - `npx supabase db push --remote --yes` : `Applying migration 20261127140000_account_deletion.sql`, puis `Applying migration 20261127150000_account_deletion_hardening.sql`, chaque fois suivi de `Finished supabase db push`. Application de la corrective autorisée par le propriétaire le 2026-11-27.
+  - `npm run format:check` : « All matched files use Prettier code style! »
+  - `npm run lint` : 0 erreur ; `npm run typecheck` : `tsc --noEmit` sans erreur.
+  - `npm test` : **131/131** (dont 5 nouveaux tests de phrase/zod/chemins storage et parité phrase–catalogue ; test storage étendu au cas hôte tiers).
+  - `npm run test:rls` : **20/20** (5 nouveaux : privilèges `EXECUTE`, `search_path`, égalité stricte du contact dans `pg_get_functiondef`, refus `anon`/`authenticated`, conservation de `users_delete_admin`, catalogue des FK filles). Un premier passage a timeouté sur un test P2.3 préexistant (5 s) puis un `afterAll` a rencontré des UUID résiduels du passage interrompu ; le délai global a été porté à 30 s et la suite rejouée intégralement : 20/20.
+  - `npm run test:e2e` : **35/35** (5 nouveaux : export complet et `no-store`, demande tierce ni exportée ni supprimée, suppression avec absence de reliquats et seed intact, refus mot de passe/phrase/origine/journal/429, champs et `app_metadata` forgés ignorés). Aucun flaky après correction de l'attente d'hydratation sous `next dev` ; l'overlay `Unexpected end of JSON input` du premier compile Turbopack reste un artefact de développement absorbé par le retry.
+  - `npm run build:web` et `npm run build:mobile` : succès ; les deux handlers apparaissent dans la route table web et aucun handler mobile n'est généré.
+  - `npm run secrets` : `no leaks found` (44 commits) ; `npm run audit` : `found 0 vulnerabilities`.
+  - Parité i18n : 144 clés strictement égales en PT/FR/EN, vérifiée par `tests/i18n.test.ts` dans les 131 tests.
+- **Dettes et réserves non bloquantes :** clés HMAC dérivées d'une IP non purgées ; `x-forwarded-for` contournable (déjà dans `BACKLOG.md`) ; comptes de test journalisés conservés par design ; objets storage supprimés par liste exacte (aucun listing récursif).
+- **Verdict verifier :** en attente ; P3.4 ne sera pas marqué `DONE` par le constructeur. Gate G3 ne sera franchi qu'après verdict `VALIDÉ`.
 
 ---
 

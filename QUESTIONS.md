@@ -84,7 +84,7 @@ Exclus en V1 : commentaires, messagerie, followers, stories, notifications push,
 | # | Sujet | Question | Recommandation |
 |---|---|---|---|
 | M1 | Seuil de lancement | Confirmez 50 acteurs, et « actif = au moins un contenu publié dans les 90 derniers jours » (A17 dit « à confirmer ») | 50 / 90 jours, configurables en base |
-| M2 | Suppression de compte | Que deviennent les contenus d'un acteur qui supprime son compte ? | Fiche repasse `geree_par_equipe`, contenus conservés avec `origine` inchangée, identité de contact supprimée. À valider juridiquement |
+| M2 | Suppression de compte | Que deviennent les contenus d'un acteur qui supprime son compte ? | **Tranchée par l'utilisateur le 2026-11-27 (P3.4) : contenus et fiche supprimés avec le compte, sans reliquat.** L'ancienne recommandation (fiche conservée) est écartée. |
 | M3 | Propriété | Un utilisateur peut-il posséder **plusieurs fiches** (ex. un promoteur avec deux salles) ? | Une seule fiche par compte en V1 (`UNIQUE(user_id)`), plusieurs comptes sinon |
 | M4 | Modération | Qui traite les signalements et retraits, avec quel délai ? | Équipe éditoriale, objectif 48 h (cahier §4.8) |
 | M5 | Images | Qui fournit les visuels des 100 événements de lancement, et sous quel accord écrit ? | Acteurs/promoteurs uniquement, accord archivé ; jamais d'image IA représentant un événement réel |
