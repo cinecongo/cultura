@@ -9,10 +9,36 @@ import { isLocale, type Locale } from '@/lib/i18n/locale';
  * produisent exactement les mêmes chemins.
  */
 
-export type RouteName = 'today' | 'week' | 'actors' | 'cities' | 'search' | 'event' | 'actor';
+export type RouteName =
+  | 'today'
+  | 'week'
+  | 'actors'
+  | 'cities'
+  | 'search'
+  | 'event'
+  | 'actor'
+  | 'signup'
+  | 'signin'
+  | 'verify'
+  | 'reset'
+  | 'password'
+  | 'account';
 
 export type Route =
-  | { readonly name: 'today' | 'week' | 'actors' | 'cities' | 'search' }
+  | {
+      readonly name:
+        | 'today'
+        | 'week'
+        | 'actors'
+        | 'cities'
+        | 'search'
+        | 'signup'
+        | 'signin'
+        | 'verify'
+        | 'reset'
+        | 'password'
+        | 'account';
+    }
   | { readonly name: 'event'; readonly slug: string }
   | { readonly name: 'actor'; readonly slug: string };
 
@@ -28,6 +54,12 @@ const segments: Record<Locale, SegmentTable> = {
     search: 'busca',
     event: 'evento',
     actor: 'ator',
+    signup: 'criarconta',
+    signin: 'entrar',
+    verify: 'confirmaremail',
+    reset: 'novapalavrapasse',
+    password: 'alterarpalavrapasse',
+    account: 'conta',
   },
   fr: {
     today: '',
@@ -37,6 +69,12 @@ const segments: Record<Locale, SegmentTable> = {
     search: 'recherche',
     event: 'evenement',
     actor: 'acteur',
+    signup: 'creercompte',
+    signin: 'connexion',
+    verify: 'confirmeremail',
+    reset: 'nouveaumotpasse',
+    password: 'modifiermotpasse',
+    account: 'compte',
   },
   en: {
     today: '',
@@ -46,6 +84,12 @@ const segments: Record<Locale, SegmentTable> = {
     search: 'search',
     event: 'event',
     actor: 'actor',
+    signup: 'signup',
+    signin: 'signin',
+    verify: 'confirmemail',
+    reset: 'resetpassword',
+    password: 'changepassword',
+    account: 'account',
   },
 };
 
