@@ -93,37 +93,44 @@ git log --oneline -1
 | Liaison CLI | **à refaire** : nécessite `SUPABASE_ACCESS_TOKEN` dans `.env.local` |
 | `.env.local` | 4 variables renseignées ; valeurs jamais affichées, fichier ignoré par Git |
 
-### 4.1 Refus de Docker — migrations en ligne (ADR-005)
+### 4.1 Refus de Docker — migrations en ligne (ADR-005, ADR-006)
 
-Docker n'est **pas** utilisé : pas de `supabase start`, pas de `db reset`, pas de base locale. Les migrations s'écrivent dans `supabase/migrations/` puis s'appliquent au projet distant avec des garde-fous :
+Docker n'est **pas** utilisé : pas de `supabase start`, pas de `db reset`, pas de base locale. Les migrations s'écrivent dans `supabase/migrations/` puis s'appliquent au projet distant avec des garde-fous.
 
-```bash
-# 1. vérifier la cible
-Get-Content supabase/.temp/project-ref          # doit afficher exsemqskhkgfsogdtvpz
+**Connexion obligatoire par le pooler** (la connexion directe est IPv6 seulement et cette machine n'a pas d'IPv6) :
 
-# 2. aperçu, sans rien appliquer
-supabase db push --dry-run
-
-# 3. sauvegarde avant application (archiver hors du dépôt)
-supabase db dump -f .backups/avant-push.sql
-
-# 4. application, après revue SQL et validation humaine
-supabase db push
-
-# 5. types TypeScript
-supabase gen types typescript --linked > src/lib/supabase/types.ts
+```text
+hôte      aws-1-eu-west-1.pooler.supabase.com
+port      5432            (mode session)
+utilisateur  postgres.exsemqskhkgfsogdtvpz
 ```
 
-Détail et justifications : `DECISIONS/ADR-005-migrations-en-ligne.md`.
+```bash
+# 1. aperçu, sans rien appliquer
+supabase db push --dry-run --db-url "postgresql://postgres.exsemqskhkgfsogdtvpz:<mot-de-passe>@aws-1-eu-west-1.pooler.supabase.com:5432/postgres"
+
+# 2. sauvegarde avant application — pg_dump NATIF (jamais `supabase db dump` : il exige Docker)
+pg_dump --dbname "<même URL>" --file .backups/avant-push.sql
+
+# 3. application, après revue SQL et validation humaine
+supabase db push --db-url "<même URL>"
+
+# 4. état des migrations
+supabase migration list --db-url "<même URL>"
+```
+
+Détail et justifications : `DECISIONS/ADR-005-migrations-en-ligne.md` et `ADR-006-connexion-base-sans-docker.md`.
 
 ### 4.2 Liaison du nouveau projet
 
 ```bash
-# prérequis : SUPABASE_ACCESS_TOKEN et SUPABASE_DB_PASSWORD dans .env.local
+# prérequis : jeton PERSONNEL (non scopé) dans SUPABASE_ACCESS_TOKEN
 supabase link --project-ref exsemqskhkgfsogdtvpz
 ```
 
-Sans `SUPABASE_ACCESS_TOKEN`, la CLI répond `LinkProjectStatusError: Your account does not have the necessary privileges…` : ce n'est pas un problème de droits, c'est l'absence de jeton.
+Mesuré le 2026-11-27 : le jeton `sbp_…` fourni est **scopé** — l'API Management répond `403 This endpoint requires a user-scoped access token`, puis `missing_permissions: projects_read / organizations_read / project_admin_read`. Il faut un jeton personnel complet (Dashboard → Account → Access Tokens).
+
+La liaison n'est **pas indispensable** : `db push`, `migration list` et les tests RLS passent par `--db-url`. Elle ne sert qu'à `gen types --linked` et aux commandes Management API.
 
 **Pièges connus :**
 
@@ -133,10 +140,11 @@ Sans `SUPABASE_ACCESS_TOKEN`, la CLI répond `LinkProjectStatusError: Your accou
 
 **Reste à faire :**
 
-1. Ajouter `SUPABASE_ACCESS_TOKEN` et `SUPABASE_DB_PASSWORD` dans `.env.local` (jamais dans le chat).
-2. Relancer `supabase link` sur le nouveau `project-ref`.
-3. **Rotation des clés** exposées dans un message le 2026-11-27 (secret `sb_secret_…` + secret JWT legacy) — voir `QUESTIONS.md` O12.
-4. Créer `cultura-staging` et `cultura-prod` — **plus tard**, avant P10.
+1. **Jeton personnel complet** : révoquer le jeton scopé, en créer un nouveau (Account → Access Tokens), le placer dans `.env.local` (`SUPABASE_ACCESS_TOKEN`).
+2. **Mot de passe de la base** : le réinitialiser (Project Settings → Database → Reset database password), puis le placer dans `.env.local` (`SUPABASE_DB_PASSWORD`) et dans `%USERPROFILE%\.cultura\supabase-dev-db-password.txt`. Celui de l'ancien projet échoue (`28P01`).
+3. **`pg_dump` natif** (PostgreSQL 17) pour les sauvegardes — avant la première donnée réelle.
+4. **Rotation des clés** exposées dans un message le 2026-11-27 (secret `sb_secret_…`, secret JWT legacy, jeton `sbp_…`) — voir `QUESTIONS.md` O12.
+5. Créer `cultura-staging` et `cultura-prod` — **plus tard**, avant P10.
 
 ---
 

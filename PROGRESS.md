@@ -192,6 +192,17 @@ Préparation détaillée : `docs/OUTILS-CONNEXION.md`.
 | `npm run secrets` | `no leaks found`, 10 commits |
 | `npm run typecheck` / `npm run lint` / `npm run format:check` | 0 erreur / 0 erreur / conforme |
 
+**Connexion base — mesures du 2026-11-27 :**
+
+| Constat | Mesure réelle |
+|---|---|
+| Jeton CLI | accepté mais **scopé** : `/v1/profile` → 403 « requires a user-scoped access token » ; `projects list` / `orgs list` → 403 (`projects_read`, `organizations_read`) ; `link` → `project_admin_read`. **Jeton à régénérer avec tous les droits.** |
+| Région du projet | **`eu-west-1`** — sonde PostgreSQL des 34 hôtes de pooler : seul `aws-1-eu-west-1.pooler.supabase.com` reconnaît le tenant |
+| Connexion directe | `db.exsemqskhkgfsogdtvpz.supabase.co` → **AAAA seul** ; machine sans IPv6 ; `ENOTFOUND` |
+| Mot de passe base | celui conservé pour l'ancien projet → **`28P01 password authentication failed`** ; à réinitialiser |
+| `supabase db dump` | **exige Docker** (`DockerRunError`) → proscrit, remplacé par `pg_dump` natif (ADR-006) |
+| `supabase db push` | fonctionne **sans Docker** via `--db-url` (échec observé uniquement sur l'authentification) |
+
 ### Vercel — non fait
 
 Bloqué par l'absence de compte/équipe (O4) et de domaine (O5). Aucun déploiement possible pour l'instant.
@@ -601,6 +612,7 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 | ADR-003 | RLS, rôles, journal immuable | **Accepté** (revue `security-reviewer` à faire en P2) | 2026-11-23 |
 | ADR-004 | Données, mutations, pagination, score | **Accepté** (revue `db-security` à faire en P2) | 2026-11-23 |
 | ADR-005 | Migrations Supabase en ligne, sans Docker | **Accepté** | 2026-11-27 |
+| ADR-006 | Connexion base par pooler, sauvegardes sans Docker | **Accepté** | 2026-11-27 |
 | DESIGN.md | Identité et composants | **Validé** (v0.2) | 2026-11-23 |
 
 ---
