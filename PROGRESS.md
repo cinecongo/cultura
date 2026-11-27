@@ -687,7 +687,7 @@ Réserves :
 ## Prochaine action
 
 1. **Verdict indépendant de P1.5** — obtenu le 2026-11-26 : **VALIDÉ** (B1/B2 corrigés et prouvés par mesures ; N37–N39 traités). P1.2 est `DONE` depuis le verdict du 2026-11-25, confirmé le 2026-11-26.
-2. **P2** : schéma Supabase **en ligne uniquement** (ADR-005, aucun Docker) sur `cultura-dev` `exsemqskhkgfsogdtvpz`. Séquence : migrations SQL versionnées → `db push --dry-run --remote` → sauvegarde `pg_dump` → revue `db-security` / `security-reviewer` → **validation humaine explicite** → `db push --remote` → tests RLS sur la base distante. Chaîne vérifiée le 2026-11-27 : `link` OK, `db push --dry-run --remote` → « Remote database is up to date », `migration list --remote` → 0 migration, `gen types --linked` OK.
+2. **P2** : **P2.1 livré** (`3262f45` — migration `20261127120000_init_cultura.sql` + types générés depuis le projet `cultura-dev`). Reste : **P2.2 RLS** (migrations `security` → `db push --remote`), puis tests RLS, seed, stockage, gate G2.
 3. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12).
 4. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
 
