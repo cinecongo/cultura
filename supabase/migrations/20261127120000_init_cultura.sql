@@ -238,10 +238,10 @@ create unique index if not exists idx_shares_annonce_user
   on public.shares (user_id, annonce_id) where annonce_id is not null;
 create unique index if not exists idx_shares_event_user
   on public.shares (user_id, event_id) where event_id is not null;
-create unique index if not exists idx_clicks_annonce_user
-  on public.clicks (user_id, annonce_id) where annonce_id is not null;
-create unique index if not exists idx_clicks_event_user
-  on public.clicks (user_id, event_id) where event_id is not null;
+create index if not exists idx_clicks_annonce
+  on public.clicks (annonce_id);
+create index if not exists idx_clicks_event
+  on public.clicks (event_id);
 create unique index if not exists idx_signalements_annonce_user
   on public.signalements (user_id, annonce_id) where annonce_id is not null;
 create unique index if not exists idx_signalements_event_user

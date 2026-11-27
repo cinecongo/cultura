@@ -1,4 +1,6 @@
 import { Client } from 'pg';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 /**
  * Client de test pour la politique RLS (P2.3).
@@ -8,6 +10,28 @@ import { Client } from 'pg';
  * `auth.uid()`, qui dérive de la GUC `request.jwt.claims` : on y injecte le
  * `sub` du compte testé avant chaque requête.
  */
+
+const ENV_FILE = join(process.cwd(), '.env.local');
+
+function loadEnvLocal(): void {
+  if (!existsSync(ENV_FILE)) {
+    return;
+  }
+  const content = readFileSync(ENV_FILE, 'utf8');
+  for (const line of content.split(/\r?\n/)) {
+    const match = line.match(/^([A-Z_]+)=(.*)$/);
+    if (!match) {
+      continue;
+    }
+    const key = match[1] as string;
+    const value = match[2] as string;
+    if (process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+}
+
+loadEnvLocal();
 
 export const RLS_TEST_HOST = process.env.SUPABASE_DB_HOST ?? 'aws-1-eu-west-1.pooler.supabase.com';
 export const RLS_TEST_PORT = Number(process.env.SUPABASE_DB_PORT ?? 5432);
@@ -39,9 +63,8 @@ export async function setJwtUser(client: Client, uid: string): Promise<void> {
   if (!isUuid(uid)) {
     throw new Error('uid invalide pour le JWT de test');
   }
-  await client.query("select set_config('request.jwt.claims', $1::jsonb, false)", [
-    JSON.stringify({ sub: uid }),
-  ]);
+  const payload = JSON.stringify({ sub: uid });
+  await client.query(`select set_config('request.jwt.claims', '${payload}', false)`);
 }
 
 export async function closeRlsClient(client: Client): Promise<void> {
