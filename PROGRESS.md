@@ -26,7 +26,7 @@
 | P2.5 | Bucket d'images privé | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; upload non-image refusé, WebP accepté (test réel) |
 | **Gate G2** | Clôture P2 | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** |
 | P3.1 | Inscription, connexion, vérification, réinitialisation | `DONE` | Premier verdict `REFUSÉ` (`/en/account` 404) corrigé ; second verdict `VALIDÉ` le 2026-11-27 ; prochaine étape P3.2 |
-| P3.2 | Rôles et garde de routes | `IN_PROGRESS` | Plan enregistré ci-dessous (2026-11-27) ; P3.3/P3.4 restent `TODO` |
+| P3.2 | Rôles et garde de routes | `DONE` | **VALIDÉ par le verifier indépendant le 2026-11-27** (commit `9d7003c`) ; Gate G3 reste ouvert jusqu'à P3.4 |
 | P3.3 | Session sur mobile | `TODO` | Émulateur Android Studio à créer (AVD absent) |
 | P3.4 | Suppression de compte et export | `TODO` | — |
 | P4 → P10 | — | `TODO` | — |
@@ -852,7 +852,7 @@ Prochaine étape autorisée : P3 (authentification et rôles), conformément au 
 
 ## [P3.2] Rôles et garde de routes
 
-- **Statut :** `IN_PROGRESS` (une étape à la fois ; P3.3 et P3.4 restent `TODO`).
+- **Statut :** `DONE` — **verdict indépendant `VALIDÉ` le 2026-11-27**, consigné sur la base du verifier (une étape à la fois ; Gate G3 non franchi, P3.3 et P3.4 restent `TODO`).
 - **Date :** 2026-11-27.
 - **Critère du guide :** « Un membre ne peut ni atteindre l'espace acteur ni l'admin (test e2e + test d'API directe). »
 - **Agents/skills appelés :** `frontend-builder`, `qa-tester`, `security-reviewer`, `i18n-auditor`, puis `verifier`. Les agents dédiés ne sont pas installés ici (seuls `explore` et `general` existent) ; substitution consignée : sous-agents `general` en revue amont (sécurité et i18n, lecture seule) avant écriture, puis verifier neuf pour le verdict. Aucun saut silencieux.
@@ -886,7 +886,9 @@ Prochaine étape autorisée : P3 (authentification et rôles), conformément au 
 - **Contrôles ciblés P3.2 :** la matrice `acteur/editeur/admin` → espace acteur et `admin` seul → espace admin est prouvée par `tests/role-guard.test.ts` ; `tests/e2e/role-guard.e2e.ts` couvre les six pages en anonyme (redirection locale vers la connexion, sans `?next`), en membre (refus i18n, ni `data-space-content` ni titre de l'espace dans le HTML initial, présence du titre de garde), la dégradation/régénération de rôle **sans déconnexion**, un faux rôle `admin` injecté dans `app_metadata` ignoré, et la sonde `/api/roles/{actor|admin}` (`401`/`403`/`200`, `400` sur segment invalide, en-tête `no-store`/`no-referrer`/`nosniff`). Les comptes de test sont promus via un client `service_role` **dans le processus Playwright** puis supprimés par `auth.admin.deleteUser` ; aucune route de test n'existe dans l'application.
 - **Correction pendant la vérification (toutes les commandes rejouées ensuite) :** le `<title>` d'une page refusée exposait encore le titre de l'espace protégé ; `generateMetadata` suit désormais la même décision que la page (`meta.guard.*` en cas de refus) et `currentProfile()` est mémoïsé par requête avec `cache()` de React pour éviter la double lecture entre métadonnées et page. L'assertion e2e vérifie désormais l'absence **et** la présence. Un test e2e préexistant (réinitialisation de mot de passe) a montré un délai de 5 s trop court sous 3 workers : il passe isolément et son attente a été portée à 10 s, comme l'attente de connexion déjà en place ; aucune assertion supprimée ni assouplie.
 - **Non applicable :** `php -l scripts/mailer.php` (aucun fichier PHP modifié en P3.2 ; l'exécutable `php` n'est d'ailleurs plus sur le PATH de ce shell). Le mailer reste inchangé et déjà validé en P3.1.
-- **Verdict verifier :** en attente ; P3.2 ne sera pas marqué `DONE` par le constructeur. Gate G3 reste ouvert ; P3.3 et P3.4 restent `TODO`.
+- **Verdict verifier (2026-11-27) : `VALIDÉ`, aucun bloquant.** Un sous-agent `general` neuf, sans lien avec le constructeur, en lecture seule, a rejoué sur `9d7003c` (arbre propre, `HEAD = origin/main`) : format/lint/typecheck 0, **125/125** unitaires, **15/15** RLS+stockage, **30/30** e2e, builds web (6 pages et API en `ƒ`) et mobile (11 pages, `out/` sans page gardée ni handler API), `no leaks found` (43 commits), audit 0, migrations 5/5 et dry-run `upToDate`, 126 clés i18n PT/FR/EN, 0 `.skip`/`.only`. Il a en plus contrôlé la source du rôle (base uniquement, zod strict), les métadonnées de refus (`meta.guard.*`), l'ordre zod → limitation → décision de l'API et les en-têtes, l'absence de `proxy.ts`, de migration, de `dangerouslySetInnerHTML`, de route de test en production et de secret dans le diff, la non-affaiblissement des tests, la redirection anonyme sans `?next` et le vocabulaire imposé. Le verifier n'a écrit aucun `DONE` et n'a rien modifié ; le présent `DONE` est consigné par le constructeur **uniquement sur la base de son verdict**.
+- **Réserve non bloquante (déjà présente avant P3.2) :** `clientIp()` accepte l'en-tête `x-forwarded-for` fourni par le client, ce qui rend la limitation de débit contournable par rotation d'en-tête ; impact faible sur une sonde qui ne renvoie qu'un booléen. À traiter hors P3.2, sans bloquer Gate G3.
+- **Suite :** Gate G3 reste ouvert jusqu'à P3.4 ; P3.3 (session mobile, AVD absent) et P3.4 restent `TODO`.
 
 ---
 
@@ -989,9 +991,10 @@ Réserves :
 
 1. **Verdict indépendant de P1.5** — obtenu le 2026-11-26 : **VALIDÉ** (B1/B2 corrigés et prouvés par mesures ; N37–N39 traités). P1.2 est `DONE` depuis le verdict du 2026-11-25, confirmé le 2026-11-26.
 2. **P2** : cinq étapes livrées et documentées individuellement ci-dessus (schéma, RLS, matrice de tests, seed, stockage). **Gate G2 `DONE` — VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; P3 est ouverte. Tout est appliqué en ligne, sans Docker ; migrations remote 3/3, dry-run à jour, 14/14 tests distants, seed intact.
-3. **P3.1 `DONE` — second verdict `VALIDÉ` le 2026-11-27** (premier refus corrigé : `/en/account` 404). 113/113 unitaires, 15/15 RLS, 27/27 e2e, builds OK, secrets/audit OK, 5/5 migrations. **P3.2 est la prochaine étape autorisée** ; Gate G3 restera ouvert jusqu'à P3.4.
-4. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12), rotation O12, vraies clés Turnstile (O7), SMTP réel (O6).
-5. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
+3. **P3.1 `DONE` — second verdict `VALIDÉ` le 2026-11-27** (premier refus corrigé : `/en/account` 404). 113/113 unitaires, 15/15 RLS, 27/27 e2e, builds OK, secrets/audit OK, 5/5 migrations.
+4. **P3.2 `DONE` — verdict indépendant `VALIDÉ` le 2026-11-27** (commit `9d7003c`). 125/125 unitaires, 15/15 RLS, 30/30 e2e, builds OK, secrets/audit OK, 5/5 migrations. **Gate G3 reste ouvert jusqu'à P3.4** ; P3.3 dépend d'un AVD Android Studio absent de cet environnement.
+5. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12), rotation O12, vraies clés Turnstile (O7), SMTP réel (O6).
+6. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
 
 ---
 
