@@ -1,4 +1,4 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+﻿export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -172,6 +172,25 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      auth_rate_limits: {
+        Row: {
+          hits: number;
+          key: string;
+          window_start: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          hits?: number;
+          key: string;
+          window_start?: string;
+        };
+        Update: {
+          hits?: number;
+          key?: string;
+          window_start?: string;
+        };
+        Relationships: [];
       };
       categories: {
         Row: {
@@ -827,6 +846,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      cultura_auth_rate_limit: {
+        Args: { p_key: string; p_max: number; p_window_seconds: number };
+        Returns: boolean;
+      };
       cultura_is_acteur: { Args: { uid?: string }; Returns: boolean };
       cultura_is_admin: { Args: { uid?: string }; Returns: boolean };
       cultura_is_editor: { Args: { uid?: string }; Returns: boolean };

@@ -14,10 +14,35 @@ const target = process.env.BUILD_TARGET === 'mobile' ? 'mobile' : 'web';
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  /*
+   * Séparation des capacités (ADR-001 §5) : les handlers d'authentification
+   * vivent dans `*.web.ts` et les pages qui lisent une session dans
+   * `*.web.tsx`. L'export statique mobile ne les voit donc pas : il ne peut
+   *ni exécuter de cookie serveur ni offrir des routes POST.
+   */
+  pageExtensions:
+    target === 'mobile'
+      ? ['mobile.ts', 'mobile.tsx', 'ts', 'tsx']
+      : ['web.ts', 'web.tsx', 'ts', 'tsx'],
   experimental: {
     // Deux layouts racines (document par défaut / document localisé) : Next a
     // besoin d'une 404 globale pour produire un document complet.
     globalNotFound: true,
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
+      },
+      {
+        source: '/api/auth/:path*',
+        headers: [{ key: 'Cache-Control', value: 'no-store' }],
+      },
+    ];
   },
   /*
    * Pas de `distDir` personnalisé : avec `output: 'export'`, Next écrit le site

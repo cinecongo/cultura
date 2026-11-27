@@ -23,7 +23,17 @@ export const serverEnvSchema = z.object({
   SUPABASE_DB_PASSWORD: z.string().min(1).optional(),
   RESEND_API_KEY: z.string().min(1).optional(),
   EMAIL_FROM: z.string().optional(),
+  /** Binaire PHP utilisé par le mailer ; « php » par défaut si absent. */
+  PHP_BINARY: z.string().min(1).optional(),
+  /** Bac à sable fichier du mailer en développement / e2e (hors Git). */
+  MAIL_OUTBOX_FILE: z.string().min(1).optional(),
+  MAIL_SMTP_HOST: z.string().min(1).optional(),
+  MAIL_SMTP_PORT: z.coerce.number().int().min(1).max(65535).optional(),
+  MAIL_SMTP_USER: z.string().optional(),
+  MAIL_SMTP_PASS: z.string().optional(),
   TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
+  /** Clé HMAC des identifiants de limitation ; dérivée de service_role si absente. */
+  AUTH_RATE_LIMIT_SECRET: z.string().min(1).optional(),
   SENTRY_DSN: z.string().optional(),
   SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
   ANDROID_PACKAGE_NAME: z.string().optional(),

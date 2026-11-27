@@ -1,3 +1,6 @@
+import { mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -17,6 +20,14 @@ const PORT = Number(process.env.E2E_PORT ?? 4319);
 // `localhost` et non `127.0.0.1` : Next 16 bloque les ressources de dev
 // demandées depuis une autre origine, ce qui empêche l'hydratation du résolveur.
 const baseURL = `http://localhost:${PORT}`;
+
+/**
+ * Le serveur e2e parle au port dédié : les liens envoyés par le mailer PHP
+ * doivent donc pointer vers ce port, pas vers le `NEXT_PUBLIC_SITE_URL` local.
+ * Le bac à sable email est isolé dans `test-results/` (ignoré par Git).
+ */
+const OUTBOX_FILE = join(process.cwd(), 'test-results', 'mail-outbox.jsonl');
+mkdirSync(dirname(OUTBOX_FILE), { recursive: true });
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -42,6 +53,11 @@ export default defineConfig({
   ],
   webServer: {
     command: `npx next dev --port ${PORT}`,
+    env: {
+      ...process.env,
+      NEXT_PUBLIC_SITE_URL: baseURL,
+      MAIL_OUTBOX_FILE: OUTBOX_FILE,
+    },
     url: `${baseURL}/pt`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
