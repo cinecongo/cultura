@@ -19,7 +19,13 @@
 | P1.3 | Squelette App Router + couche `platform` + deux builds | `DONE` | **VALIDÉ par le `verifier` le 2026-11-24** |
 | P1.4 | i18n typé PT-AO/FR/EN + 2 écrans + résolveur | `DONE` | **VALIDÉ par le `verifier` le 2026-11-24** ; corrections N1–N3, N8, N12, N18, N19 appliquées |
 | P1.5 | Design system : tokens, Archivo, en-tête, réglette | `DONE` | **VALIDÉ par le `verifier` indépendant le 2026-11-26** (B1/B2 corrigés et prouvés ; N37–N39 traités) |
-| P2 → P10 | — | `TODO` | — |
+| P2.1 | Schéma et types générés | `VERIFYING` | 3 migrations remote appliquées, dry-run à jour |
+| P2.2 | RLS et protection des rôles | `VERIFYING` | 17/17 tables avec RLS, 0 écriture ouverte |
+| P2.3 | Matrice de tests RLS | `VERIFYING` | 11/11 tests RLS + 3/3 stockage |
+| P2.4 | Seed fictif PT/FR/EN | `VERIFYING` | 5 villes, 6 catégories, données non personnelles |
+| P2.5 | Bucket d'images privé | `VERIFYING` | Upload non-image refusé, WebP accepté (test réel) |
+| **Gate G2** | Clôture P2 | `VERIFYING` | Verdict `verifier` indépendant à obtenir |
+| P3 → P10 | — | `TODO` | — |
 
 **Gate G0 : FRANCHIE le 2026-11-23** par validation humaine (« tu as le go »), avec **réserves** :
 Q7 (relecteur PT-AO non nommé), O4–O11 (Vercel, domaine, email, Turnstile, Sentry, package Android, CI), M12 (validation juridique).
@@ -589,6 +595,125 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 
 ---
 
+## [P2.1] Schéma et types générés
+
+- **Statut :** `VERIFYING` — verdict global attendu à la Gate G2.
+- **Skills/agents appelés :** `db-security`, `engineering:system-design` (substituts : ADR-003/004 acceptés, revue SQL avant application, dry-run CLI). Date : 2026-11-27.
+- **Plan :**
+  1. Écrire la migration du modèle amendé (rôles, interactions, tables de revendication/demande).
+  2. Poser les index recommandés et les contraintes CHECK (source obligatoire pour `origine = 'equipe'`).
+  3. Appliquer en ligne, sans Docker, sur le projet `exsemqskhkgfsogdtvpz` (ADR-005/006).
+  4. Générer les types TypeScript depuis la base distante.
+- **Livrables :** `supabase/migrations/20261127120000_init_cultura.sql`, `src/lib/supabase/types.ts` (commit `3262f45`).
+- **Preuves (2026-11-27) :**
+  - `supabase migration list --remote` → **3 entrées locales = 3 entrées distantes** (`20261127120000`, `…0001`, `…0002`), cible `exsemqskhkgfsogdtvpz`.
+  - `supabase db push --dry-run --remote` → `upToDate: true`, `migrations: []`.
+  - `supabase gen types typescript --linked` → fichier généré (converti UTF-16 → UTF-8), `typecheck` vert.
+  - Base distante PostgreSQL **17.12**, **17 tables** dans `public`.
+- **Verdict verifier :** en attente (Gate G2).
+- **Dette :** aucune.
+
+---
+
+## [P2.2] RLS et protection des rôles
+
+- **Statut :** `VERIFYING` — verdict global attendu à la Gate G2.
+- **Skills/agents appelés :** `db-security` (substitut : revue SQL des policies + contrôles `pg_catalog`, ADR-003). Date : 2026-11-27.
+- **Plan :**
+  1. Activer RLS sur toutes les tables du modèle.
+  2. Écrire les policies du cahier §10.3 (lecture publique `statut = 'valide'`, acteur propriétaire, éditeur, admin, journal immuable).
+  3. Protéger `users.role` via helpers `security definer` (`cultura_is_admin`, `cultura_is_editor`, `cultura_is_acteur`).
+  4. Vérifier la couverture et l'absence d'écriture ouverte en base.
+- **Livrables :** `supabase/migrations/20261127120001_rls_cultura.sql` (commit `e7fd6d9`), ajustements avant push (commit `97ebcf7`).
+- **Preuves (2026-11-27, pooler, lecture seule) :**
+  - `pg_tables` / `pg_policies` : **17 tables, 17 avec `rowsecurity = true`**, `TABLES_SANS_RLS = []`.
+  - Policies d'écriture avec `qual = 'true'` ou `with_check = 'true'` : **`ECRITURES_OUVERTES = []`**.
+  - `moderation_log` : 1 policy `INSERT` (`cultura_is_admin()`), 0 policy `UPDATE`/`DELETE`.
+  - `vues_quotidiennes` : RLS activée, 0 policy → denial par défaut (accès réservé au service).
+  - **Écart contrôlé :** `get_advisors('security')` n'est **pas disponible** sur ce projet : RPC REST → `404 PGRST202` (fonction absente du schéma cache), aucune fonction `*advisor*` hors `pg_catalog`, endpoints Management API `/advisors` et `/database/lints` → 404. Substitution retenue : les contrôles `pg_catalog` ci-dessus, qui couvrent les deux critères vérifiables (« aucune table sans RLS », « aucune écriture ouverte »).
+- **Verdict verifier :** en attente (Gate G2).
+- **Dette :** `get_advisors` à relancer si Supabase réintroduit la fonction ; aucune alerte de sécurité détectée par substitution.
+
+---
+
+## [P2.3] Matrice de tests RLS
+
+- **Statut :** `VERIFYING` — verdict global attendu à la Gate G2.
+- **Skills/agents appelés :** `qa-tester` (substitut : tests écrits par le constructeur, rejoués par le `verifier`). Date : 2026-11-27.
+- **Plan :**
+  1. Établir une session qui **évalue réellement** RLS (`set role authenticated`, le rôle de connexion ayant `rolbypassrls = true`).
+  2. Couvrir anonyme / membre / acteur A / acteur B / éditeur / admin × lecture / création / modification / suppression.
+  3. Nettoyer uniquement les identifiants de test, pour préserver le seed.
+  4. Ajouter la couverture du stockage au même lot de tests distants.
+- **Livrables :** `tests/rls/setup.ts`, `tests/rls/rls.test.ts`, `tests/storage/storage.test.ts`, scripts `test` / `test:rls` ajustés.
+- **Preuves (2026-11-27) :**
+  - `npm run test:rls` → **2 fichiers, 14/14 tests passés** (11 RLS + 3 stockage, 24,79 s).
+  - Rôles couverts : anonyme (annonce `valide` visible, `en_attente` invisible), membre, acteur A/B, éditeur, admin.
+  - Opérations couvertes : lecture, création annonce/événement, modification, suppression, rôle `users.role`, likes, `moderation_log`.
+  - Cas d'accès interdit qui **doivent** échouer : création par membre, création d'événement par acteur B, modification par acteur B, changement de rôle par éditeur, like au nom d'autrui, insertion dans `moderation_log` par membre — tous rejetés.
+  - Correction apportée : le harness supprimait auparavant toutes les fiches/annonces/événements ; le nettoyage est désormais ciblé et le seed survit à la suite (vérifié : 5 fiches, 6 annonces, 5 événements après exécution).
+- **Verdict verifier :** en attente (Gate G2).
+- **Dette :** la matrice est couverte par des tests SQL réels, pas par des appels HTTP authentifiés (P3 ajoutera les parcours e2e).
+
+---
+
+## [P2.4] Données de test fictives
+
+- **Statut :** `VERIFYING` — verdict global attendu à la Gate G2.
+- **Skills/agents appelés :** `i18n-auditor` (substitut : relecture PT/FR/EN interne, Q7 toujours ouvert). Date : 2026-11-27.
+- **Plan :**
+  1. Créer un seed fictif idempotent, sans donnée réelle ni personnelle.
+  2. Couvrir 5 villes, toutes les catégories, fiches, événements, annonces et interactions.
+  3. Réappliquer le seed après stabilisation du harness RLS.
+- **Livrables :** `supabase/seed.sql` (commit initial `9dd1781`, mise à jour 2026-11-27).
+- **Preuves (2026-11-27, après réapplication) :**
+  - Exécution via pooler → `SEED OK`, sans erreur.
+  - Comptages SQL : **`villes_events = 5`** (Luanda, Huambo, Benguela, Lobito, Namibe), **`villes_acteurs = 4`** ; il n'existe pas de table `public.villes` (les villes sont des champs texte du modèle amendé) — critère « 5 villes » vérifié sur `distinct ville`.
+  - **`categories = 6`**, **`categories_annonces = 6`**, `acteurs = 5`, `annonces = 6`, `events = 5`.
+  - Toutes les insertions utilisent `on conflict (id) do nothing` : réexécution sans doublon.
+  - Langues PT/FR/EN réparties sur les fiches, annonces et événements ; noms et domaines explicitement fictifs.
+- **Verdict verifier :** en attente (Gate G2).
+- **Dette :** relecture PT-AO (Q7) non faite ; aucune donnée réelle.
+
+---
+
+## [P2.5] Stockage d'images
+
+- **Statut :** `VERIFYING` — verdict global attendu à la Gate G2.
+- **Skills/agents appelés :** `security-reviewer` (substitut : test réel d'upload + revue de configuration bucket). Date : 2026-11-27.
+- **Plan :**
+  1. Créer le bucket privé `cultura-media` avec limite de taille et liste MIME blanche.
+  2. Appliquer la migration en ligne et vérifier la configuration distante.
+  3. Tester refus d'un non-image, acceptation d'un WebP, refus d'un upload anonyme.
+- **Livrables :** `supabase/migrations/20261127120002_storage_cultura.sql` (commit `a15aa5d`), `tests/storage/storage.test.ts`.
+- **Preuves (2026-11-27) :**
+  - `supabase db push --remote --yes` → migration appliquée ; `migration list --remote` → 3/3.
+  - `GET /storage/v1/bucket/cultura-media` → **HTTP 200** : `public: false`, `file_size_limit: 10485760`, `allowed_mime_types: [image/webp, image/png, image/jpeg, image/avif]`, `versioning_status: DISABLED`.
+  - `npm run test:rls` → test 1 : configuration conforme ; test 2 : **upload `text/plain` refusé**, **upload WebP accepté**, objet supprimé ensuite ; test 3 : **upload anonyme refusé**.
+  - Aucune policy `storage.objects` : bucket inaccessible aux utilisateurs finaux jusqu'au chemin serveur sécurisé de P4.5 (déni par défaut, choix documenté dans la migration).
+- **Verdict verifier :** en attente (Gate G2).
+- **Dette :** upload depuis l'application (redimensionnement WebP, nom généré) en P4.5 ; aucune image servie publiquement pour l'instant.
+
+---
+
+## Gate G2 — clôture de P2
+
+- **Statut :** `VERIFYING` — verdict indépendant du `verifier` en cours.
+- **Critères du guide §9 (P2) :**
+
+| Critère | État | Preuve |
+|---|---|---|
+| P2.1 migrations appliquées sur projet vierge + types générés | Satisfait | `migration list` 3/3, dry-run à jour, types générés |
+| P2.2 0 alerte sécurité, aucune table sans RLS | Satisfait par substitution | 17/17 RLS, `TABLES_SANS_RLS = []`, `ECRITURES_OUVERTES = []` ; `get_advisors` indisponible (documenté) |
+| P2.3 matrice rôles × CRUD, cas interdits verts | Satisfait | 14/14 tests distants |
+| P2.4 seed 5 villes + toutes catégories, aucune donnée réelle | Satisfait | comptages SQL ci-dessus |
+| P2.5 upload non-image refusé (test) | Satisfait | test d'upload réel, 3/3 |
+
+- **Verdict `verifier` :** à inscrire ici par l'agent indépendant, lui seul.
+- **Prochaine étape autorisée :** P3 (authentification et rôles) uniquement après verdict `VALIDÉ`.
+
+---
+
 ## Synthèse — Verdicts indépendants P1.2 / P1.5 (2026-11-26)
 
 | Étape | Verdict | Date | Suite |
@@ -687,7 +812,7 @@ Réserves :
 ## Prochaine action
 
 1. **Verdict indépendant de P1.5** — obtenu le 2026-11-26 : **VALIDÉ** (B1/B2 corrigés et prouvés par mesures ; N37–N39 traités). P1.2 est `DONE` depuis le verdict du 2026-11-25, confirmé le 2026-11-26.
-2. **P2** : **P2.1 livré** (`3262f45` — migration `20261127120000_init_cultura.sql` + types générés depuis le projet `cultura-dev`) ; **P2.2 livré** (`e7fd6d9` — politique RLS, cahier §10.3) ; **P2.3 stabilisé et vert** (`25a5321` — harness `tests/rls` : bascule `set role authenticated` via `set role` (le rôle `postgres.<ref>` est en `rolbypassrls=true`, neutralisant les policies), cleanup + seeding idempotents, attentes corrigées ; **5/5 tests RLS passent** contre la base distante migrée). **P2.4 livré** (`9dd1781` — `supabase/seed.sql` fictif PT/FR/EN, exécuté avec succès via le pooler). **P2.5 appliqué** (`a15aa5d` — migration `20261127120002_storage_cultura.sql` : bucket privé `cultura-media` + `file_size_limit` 10 Mo + `allowed_mime_types` WebP/PNG/JPEG/AVIF ; `db push --remote --yes` ✔, migrations remote : 3/3 appliquées). **Gate G2** : à formaliser (P2 terminé — tout est en ligne, sans Docker).
+2. **P2** : cinq étapes livrées et documentées individuellement ci-dessus (schéma, RLS, matrice de tests, seed, stockage). **Gate G2 en `VERIFYING`** : le verdict indépendant du `verifier` doit être inscrit dans la section « Gate G2 » avant d'ouvrir P3. Tout est appliqué en ligne, sans Docker ; migrations remote 3/3, dry-run à jour, 14/14 tests distants, seed intact.
 3. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12).
 4. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
 
