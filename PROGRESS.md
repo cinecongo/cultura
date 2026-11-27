@@ -25,7 +25,7 @@
 | P2.4 | Seed fictif PT/FR/EN | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; 5 villes, 6 catégories, données non personnelles |
 | P2.5 | Bucket d'images privé | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; upload non-image refusé, WebP accepté (test réel) |
 | **Gate G2** | Clôture P2 | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** |
-| P3.1 | Inscription, connexion, vérification, réinitialisation | `VERIFYING` | Toutes les preuves produites le 2026-11-27 ; verdict `verifier` en attente |
+| P3.1 | Inscription, connexion, vérification, réinitialisation | `DONE` | Premier verdict `REFUSÉ` (`/en/account` 404) corrigé ; second verdict `VALIDÉ` le 2026-11-27 ; prochaine étape P3.2 |
 | P3.2 | Rôles et garde de routes | `TODO` | — |
 | P3.3 | Session sur mobile | `TODO` | Émulateur Android Studio à créer (AVD absent) |
 | P3.4 | Suppression de compte et export | `TODO` | — |
@@ -800,7 +800,7 @@ Prochaine étape autorisée : P3 (authentification et rôles), conformément au 
 
 ## [P3.1] Inscription, connexion, vérification, réinitialisation
 
-- **Statut :** `VERIFYING` (une étape à la fois ; P3.2–P3.4 restent `TODO` jusqu'au verdict indépendant).
+- **Statut :** `DONE` (2026-11-27, sur le second verdict indépendant `VALIDÉ` ; P3.2–P3.4 restent `TODO`, Gate G3 non franchi).
 - **Date :** 2026-11-27.
 - **Skills/agents appelés :** `frontend-builder`, `security-reviewer`, `design:ux-copy` (guide §6). Les skills dédiés ne sont pas installés dans cet environnement ; substitutions consignées : revue amont par sous-agents `security-reviewer` et `i18n-auditor`/`design:ux-copy`, relecture finale avant verdict. Aucun saut silencieux.
 - **Décisions humaines du 2026-11-27 (questions posées avant tout code) :**
@@ -845,7 +845,8 @@ Prochaine étape autorisée : P3 (authentification et rôles), conformément au 
   3. Nouveau test e2e : `/en/account` affiche le garde-fou « Sign in to continue » avec un lien vers la connexion.
   4. `scripts/mailer.php::smtpCommand()` consomme désormais toutes les lignes de continuation `250-…` d'une réponse SMTP multiligne, avec une borne de 32 lignes, avant d'envoyer `AUTH LOGIN`.
 - **Action obligatoire après correction :** toutes les vérifications ont été rejouées intégralement le 2026-11-27 : format OK, lint 0, typecheck 0, **113/113** unitaires, **15/15** RLS+stockage, **27/27** e2e, build web **72** entrées, build mobile 11 pages, `php -l` OK, `no leaks found`, `0 vulnerabilities`, migrations 5/5 et dry-run `upToDate`. Un **nouveau verifier neuf** est demandé. Le premier verdict reste consigné ; aucun `DONE` n'est écrit par le constructeur.
-- **Verdict verifier final :** en attente du second passage ; P3.1 reste `VERIFYING`.
+- **Verdict verifier final (2026-11-27, second passage) : `VALIDÉ`.** Un sous-agent `general` neuf, sans lien avec le constructeur ni le premier verifier, a rejoué les douze commandes sur un arbre propre à `b2d463d` : format/lint/typecheck 0, **113/113** unitaires, **15/15** RLS+stockage, **27/27** e2e, builds web (72 entrées, dont `ƒ /[locale]/account`) et mobile (11 pages) OK, `php -l` OK, gitleaks `no leaks found` (avec sonde positive hors dépôt), audit 0, migrations 5/5 et dry-run `upToDate`. Il a en plus : contrôlé `/en/account` en HTTP direct (200, garde-fou « Sign in to continue »), réalisé un contre-essai Vitest en masquant le fichier (le test échoue bien), validé la continuation EHLO SMTP sur banc d'essai local (3 lignes acceptées, 40 lignes et `550` rejetés), vérifié l'absence de régression du bac à sable, comparé les **117 clés** i18n PT/FR/EN (0 manquante, 0 surnuméraire, 0 vide) et recontrôlé B1–B4, la RLS, le rôle relu en base et l'absence de `dangerouslySetInnerHTML`. **Bloquants : aucun.** Le verifier n'a lui-même écrit aucun `DONE` et n'a rien modifié ; le présent `DONE` est consigné par le constructeur **uniquement sur la base de son verdict**.
+- **Réserves non bloquantes pour P3.1, bloquantes pour la production :** clés Turnstile de test (O7), SMTP réel non disponible (O6), en-têtes non appliqués à l'export mobile, rotation O12, Q7 et O5/O13.
 
 ---
 
@@ -948,8 +949,9 @@ Réserves :
 
 1. **Verdict indépendant de P1.5** — obtenu le 2026-11-26 : **VALIDÉ** (B1/B2 corrigés et prouvés par mesures ; N37–N39 traités). P1.2 est `DONE` depuis le verdict du 2026-11-25, confirmé le 2026-11-26.
 2. **P2** : cinq étapes livrées et documentées individuellement ci-dessus (schéma, RLS, matrice de tests, seed, stockage). **Gate G2 `DONE` — VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; P3 est ouverte. Tout est appliqué en ligne, sans Docker ; migrations remote 3/3, dry-run à jour, 14/14 tests distants, seed intact.
-3. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12).
-4. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
+3. **P3.1 `DONE` — second verdict `VALIDÉ` le 2026-11-27** (premier refus corrigé : `/en/account` 404). 113/113 unitaires, 15/15 RLS, 27/27 e2e, builds OK, secrets/audit OK, 5/5 migrations. **P3.2 est la prochaine étape autorisée** ; Gate G3 restera ouvert jusqu'à P3.4.
+4. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12), rotation O12, vraies clés Turnstile (O7), SMTP réel (O6).
+5. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
 
 ---
 
