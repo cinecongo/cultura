@@ -127,6 +127,13 @@ test.describe('parcours auth complets', () => {
     await signin(page, email, NEW_PASSWORD);
   });
 
+  test('la page compte anglaise existe et protège la session', async ({ page }) => {
+    await isolate(page);
+    await page.goto('/en/account');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sign in to continue');
+    await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
+  });
+
   test('les trois langues exposent les écrans d’authentification', async ({ page }) => {
     await isolate(page);
     for (const [path, title, label] of [

@@ -76,10 +76,21 @@ function smtpCommand($socket, string $command, int $expected): void
     if (fwrite($socket, $command . "\r\n") === false) {
         fail('smtp_write_failed');
     }
-    $line = fgets($socket, 512);
-    if ($line === false || !preg_match('/^' . $expected . '[\s-]/', $line)) {
-        fail('smtp_rejected');
+
+    // Une réponse SMTP peut être multiligne (EHLO : `250-…` puis `250 …`).
+    // On consomme toutes les lignes de continuation avant de rendre la main,
+    // sinon `AUTH LOGIN` lirait un `250-…` résiduel et serait refusé.
+    for ($i = 0; $i < 32; $i++) {
+        $line = fgets($socket, 512);
+        if ($line === false || !preg_match('/^' . $expected . '(?:[\s-]|$)/', $line)) {
+            fail('smtp_rejected');
+        }
+        if (!isset($line[3]) || $line[3] !== '-') {
+            return;
+        }
     }
+
+    fail('smtp_rejected');
 }
 
 function sendSmtp(string $from, string $to, string $subject, string $body): void

@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { isValidSlug, localeFromPath, routePath, segmentsFor } from '@/lib/platform/routes';
@@ -75,6 +78,26 @@ describe('segmentsFor', () => {
     for (const locale of locales) {
       for (const value of Object.values(segmentsFor(locale))) {
         expect(value).toMatch(/^[a-z]*$/);
+      }
+    }
+  });
+
+  it('fournit un fichier de page pour chaque écran d’authentification localisé', () => {
+    const screens = ['signup', 'signin', 'verify', 'reset', 'password', 'account'] as const;
+    for (const locale of locales) {
+      for (const screen of screens) {
+        const segment = segmentsFor(locale)[screen];
+        const file = join(
+          process.cwd(),
+          'src',
+          'app',
+          '(localized)',
+          '[locale]',
+          '(auth)',
+          segment,
+          'page.web.tsx',
+        );
+        expect(existsSync(file), `${locale}.${screen} → /${locale}/${segment}`).toBe(true);
       }
     }
   });
