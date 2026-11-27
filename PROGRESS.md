@@ -192,16 +192,21 @@ Préparation détaillée : `docs/OUTILS-CONNEXION.md`.
 | `npm run secrets` | `no leaks found`, 10 commits |
 | `npm run typecheck` / `npm run lint` / `npm run format:check` | 0 erreur / 0 erreur / conforme |
 
-**Connexion base — mesures du 2026-11-27 :**
+**Connexion base — état final mesuré le 2026-11-27 :**
 
 | Constat | Mesure réelle |
 |---|---|
-| Jeton CLI | accepté mais **scopé** : `/v1/profile` → 403 « requires a user-scoped access token » ; `projects list` / `orgs list` → 403 (`projects_read`, `organizations_read`) ; `link` → `project_admin_read`. **Jeton à régénérer avec tous les droits.** |
-| Région du projet | **`eu-west-1`** — sonde PostgreSQL des 34 hôtes de pooler : seul `aws-1-eu-west-1.pooler.supabase.com` reconnaît le tenant |
+| Jeton CLI | jeton **scopé** : `/v1/profile` → 403 (attendu pour ce type), mais `projects_read`, `network-restrictions` (écriture) et `database/query` accordés ; `supabase link` **réussi** |
+| Région du projet | **`eu-west-1`** — seul `aws-1-eu-west-1.pooler.supabase.com` reconnaît le tenant |
 | Connexion directe | `db.exsemqskhkgfsogdtvpz.supabase.co` → **AAAA seul** ; machine sans IPv6 ; `ENOTFOUND` |
-| Mot de passe base | celui conservé pour l'ancien projet → **`28P01 password authentication failed`** ; à réinitialiser |
+| Restrictions réseau | liste d'autorisation **vide** → le pooler refusait toute adresse (`EADDRNOTALLOWED`). Ajout de `154.71.185.107/32` (IP publique de la machine) via `PATCH /v1/projects/{ref}/network-restrictions` → connexion acceptée |
+| Mot de passe base | réinitialisé ; testé avec deux clients indépendants (CLI Supabase et `node-postgres`) → **connexion OK**, rôle `postgres` |
 | `supabase db dump` | **exige Docker** (`DockerRunError`) → proscrit, remplacé par `pg_dump` natif (ADR-006) |
-| `supabase db push` | fonctionne **sans Docker** via `--db-url` (échec observé uniquement sur l'authentification) |
+| `supabase db push --dry-run --remote` | **`Remote database is up to date`**, 0 migration |
+| `supabase migration list --remote` | **0 migration** (base vierge) |
+| `supabase gen types typescript --linked` | **fonctionne sans Docker** |
+| Base | PostgreSQL **17.12**, `public` : **0 table**, rôle `postgres` : `rolsuper=false`, `rolbypassrls=true`, `rolcreaterole=true` |
+| API Management `POST /database/query` | **HTTP 201** — permet d'exécuter du SQL sans client local (utile pour les tests RLS) |
 
 ### Vercel — non fait
 
@@ -682,7 +687,7 @@ Réserves :
 ## Prochaine action
 
 1. **Verdict indépendant de P1.5** — obtenu le 2026-11-26 : **VALIDÉ** (B1/B2 corrigés et prouvés par mesures ; N37–N39 traités). P1.2 est `DONE` depuis le verdict du 2026-11-25, confirmé le 2026-11-26.
-2. **P2** : schéma Supabase **en ligne uniquement** (ADR-005, aucun Docker) sur `cultura-dev` `exsemqskhkgfsogdtvpz`. Séquence : migrations SQL versionnées → `db push --dry-run` → dump de sauvegarde → revue `db-security` / `security-reviewer` → **validation humaine explicite** → `db push` → tests RLS sur la base distante. Prérequis humain : `SUPABASE_ACCESS_TOKEN` et `SUPABASE_DB_PASSWORD` dans `.env.local`, puis `supabase link` sur le nouveau `project-ref`.
+2. **P2** : schéma Supabase **en ligne uniquement** (ADR-005, aucun Docker) sur `cultura-dev` `exsemqskhkgfsogdtvpz`. Séquence : migrations SQL versionnées → `db push --dry-run --remote` → sauvegarde `pg_dump` → revue `db-security` / `security-reviewer` → **validation humaine explicite** → `db push --remote` → tests RLS sur la base distante. Chaîne vérifiée le 2026-11-27 : `link` OK, `db push --dry-run --remote` → « Remote database is up to date », `migration list --remote` → 0 migration, `gen types --linked` OK.
 3. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12).
 4. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
 

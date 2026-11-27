@@ -21,10 +21,11 @@ L'humain a répondu « **tu as le go** » et fourni le dépôt GitHub ainsi que 
 | Q7 | **Ouvert** — relecteur PT-AO non nommé | Bloque uniquement la validation finale des textes (P8.4), pas le squelette |
 | T1–T17 | **Accepté en bloc** | Corrections appliquées en P2.1 + ADR de schéma |
 | O1 | **`cinecongo/cultura`**, HTTPS, branche `main` poussée | `origin` configuré ; commit `9fba525` |
-| O2 | **Nouveau projet `cultura-dev`** (`exsemqskhkgfsogdtvpz`, 2026-11-27) — remplace `rfjoxvlgejcvknowvztj` | Clés `sb_publishable_…` / `sb_secret_…` valides et testées ; **`supabase link` bloqué** (jeton scopé) ; migrations possibles via `--db-url` (pooler) |
+| O2 | **Nouveau projet `cultura-dev`** (`exsemqskhkgfsogdtvpz`, 2026-11-27) — remplace `rfjoxvlgejcvknowvztj` | Clés `sb_publishable_…` / `sb_secret_…` testées ; **`supabase link` fait** ; `db push --remote`, `migration list`, `gen types` opérationnels ; base vierge |
 | O3 | **`eu-west-1`** — confirmé le 2026-11-27 par sonde du pooler (`aws-1-eu-west-1`) | Aucune région africaine sur le plan gratuit ; à réévaluer si une région Afrique s'ouvre |
 | O4–O11 | **Ouverts** | Vercel, domaine, email, Turnstile, Sentry, package Android, CI |
-| O12 | **Rotation des secrets Supabase** | Clé secrète `sb_secret_…`, secret JWT legacy et jeton `sbp_…` exposés dans des messages les 2026-11-27 → rotation avant P10, puis mise à jour de `.env.local` et des secrets d'hébergement |
+| O12 | **Rotation des secrets Supabase** | Clé secrète `sb_secret_…`, secret JWT legacy, jeton `sbp_…` et **mot de passe de la base** exposés dans des messages les 2026-11-27 → rotation avant P10, puis mise à jour de `.env.local` et des secrets d'hébergement |
+| O13 | **Liste d'autorisation réseau du projet** | Contient `154.71.185.107/32` (IP publique de la machine au 2026-11-27). Si l'IP change, la connexion base échoue (`EADDRNOTALLOWED`) → mettre à jour via l'API Management ou le tableau de bord |
 
 **Réserves maintenues :** Q7 (PT-AO), O4–O12 (Vercel, domaine, email, Android, rotation des clés), M12 (validation juridique). Elles ne bloquent pas le squelette technique mais bloquent la mise en production.
 

@@ -106,17 +106,24 @@ utilisateur  postgres.exsemqskhkgfsogdtvpz
 ```
 
 ```bash
+# variables attendues dans l'environnement (jamais sur la ligne de commande)
+#   SUPABASE_ACCESS_TOKEN   jeton personnel
+#   SUPABASE_DB_PASSWORD    mot de passe de la base
+
 # 1. aperçu, sans rien appliquer
-supabase db push --dry-run --db-url "postgresql://postgres.exsemqskhkgfsogdtvpz:<mot-de-passe>@aws-1-eu-west-1.pooler.supabase.com:5432/postgres"
+supabase db push --dry-run --remote
 
 # 2. sauvegarde avant application — pg_dump NATIF (jamais `supabase db dump` : il exige Docker)
-pg_dump --dbname "<même URL>" --file .backups/avant-push.sql
+pg_dump --dbname "postgresql://postgres.exsemqskhkgfsogdtvpz:<mot-de-passe>@aws-1-eu-west-1.pooler.supabase.com:5432/postgres" --file .backups/avant-push.sql
 
 # 3. application, après revue SQL et validation humaine
-supabase db push --db-url "<même URL>"
+supabase db push --remote
 
 # 4. état des migrations
-supabase migration list --db-url "<même URL>"
+supabase migration list --remote
+
+# 5. types TypeScript (ne nécessite pas Docker)
+supabase gen types typescript --linked > src/lib/supabase/types.ts
 ```
 
 Détail et justifications : `DECISIONS/ADR-005-migrations-en-ligne.md` et `ADR-006-connexion-base-sans-docker.md`.
@@ -124,13 +131,13 @@ Détail et justifications : `DECISIONS/ADR-005-migrations-en-ligne.md` et `ADR-0
 ### 4.2 Liaison du nouveau projet
 
 ```bash
-# prérequis : jeton PERSONNEL (non scopé) dans SUPABASE_ACCESS_TOKEN
+# déjà exécuté le 2026-11-27
 supabase link --project-ref exsemqskhkgfsogdtvpz
 ```
 
-Mesuré le 2026-11-27 : le jeton `sbp_…` fourni est **scopé** — l'API Management répond `403 This endpoint requires a user-scoped access token`, puis `missing_permissions: projects_read / organizations_read / project_admin_read`. Il faut un jeton personnel complet (Dashboard → Account → Access Tokens).
+Résultat : `{"target":{"kind":"linked","project_ref":"exsemqskhkgfsogdtvpz"}}`. Le jeton fourni est **scopé** (`/v1/profile` → 403, comportement normal) mais accorde `projects_read`, l'écriture des restrictions réseau et `database/query` : suffisant pour la CLI.
 
-La liaison n'est **pas indispensable** : `db push`, `migration list` et les tests RLS passent par `--db-url`. Elle ne sert qu'à `gen types --linked` et aux commandes Management API.
+**Restrictions réseau :** la liste d'autorisation du projet était vide, ce qui fait refuser toute connexion base. L'IP publique de la machine (`154.71.185.107/32`) a été ajoutée via `PATCH /v1/projects/{ref}/network-restrictions`. Si l'IP change, la connexion échoue avec `EADDRNOTALLOWED` (voir `QUESTIONS.md` O13).
 
 **Pièges connus :**
 
@@ -140,11 +147,10 @@ La liaison n'est **pas indispensable** : `db push`, `migration list` et les test
 
 **Reste à faire :**
 
-1. **Jeton personnel complet** : révoquer le jeton scopé, en créer un nouveau (Account → Access Tokens), le placer dans `.env.local` (`SUPABASE_ACCESS_TOKEN`).
-2. **Mot de passe de la base** : le réinitialiser (Project Settings → Database → Reset database password), puis le placer dans `.env.local` (`SUPABASE_DB_PASSWORD`) et dans `%USERPROFILE%\.cultura\supabase-dev-db-password.txt`. Celui de l'ancien projet échoue (`28P01`).
-3. **`pg_dump` natif** (PostgreSQL 17) pour les sauvegardes — avant la première donnée réelle.
-4. **Rotation des clés** exposées dans un message le 2026-11-27 (secret `sb_secret_…`, secret JWT legacy, jeton `sbp_…`) — voir `QUESTIONS.md` O12.
-5. Créer `cultura-staging` et `cultura-prod` — **plus tard**, avant P10.
+1. **`pg_dump` natif** (PostgreSQL 17) pour les sauvegardes — avant la première donnée réelle.
+2. **Rotation des secrets** exposés dans des messages le 2026-11-27 (clé secrète, secret JWT legacy, jeton `sbp_…`, mot de passe de la base) — voir `QUESTIONS.md` O12.
+3. **IP dynamique** : si l'IP publique change, mettre à jour la liste d'autorisation réseau (O13).
+4. Créer `cultura-staging` et `cultura-prod` — **plus tard**, avant P10.
 
 ---
 

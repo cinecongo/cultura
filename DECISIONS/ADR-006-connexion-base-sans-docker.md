@@ -48,6 +48,14 @@ ADR-005 retient un travail en ligne, sans Docker. La mise en œuvre réelle sur 
 | Aucun Docker | `supabase db dump` interdit dans les scripts | 0 occurrence |
 | Sauvegarde | `pg_dump --version` | ≥ 17 |
 
+## Amendement du 2026-11-27 (exécution)
+
+Trois faits découverts en appliquant la décision, consignés sans modifier les décisions ci-dessus :
+
+1. **Restrictions réseau.** La liste d'autorisation du projet était **vide**, ce qui fait refuser *toute* adresse par le pooler (`EADDRNOTALLOWED`), y compris celle de la machine. Correction appliquée via l'API Management : `PATCH /v1/projects/{ref}/network-restrictions` avec `add.dbAllowedCidrs = ["154.71.185.107/32"]`. **Conséquence :** si l'IP publique change (connexion résidentielle), la base refusera la connexion ; il faut alors mettre à jour la liste. Suivi dans `QUESTIONS.md` (O13).
+2. **Syntaxe CLI 3.x.** `--db-url` est **déprécié** au profit de `--remote` (projet lié) ou `--remote=<db-url>`. La forme retenue est `--remote`, avec `SUPABASE_DB_PASSWORD` dans l'environnement.
+3. **`gen types` ne dépend pas de Docker.** `supabase gen types typescript --linked` fonctionne directement, contrairement à `db dump`.
+
 ## Références
 
 - `DECISIONS/ADR-005-migrations-en-ligne.md`
