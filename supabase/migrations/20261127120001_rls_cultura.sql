@@ -343,3 +343,35 @@ create policy "moderation_log_insert_admin" on public.moderation_log
 -- Statistiques (vues_quotidiennes) : accès réservé au service / admin.
 
 alter table public.vues_quotidiennes enable row level security;
+
+-- Complète la couverture RLS : aucune table du modèle (§10.1) sans RLS.
+alter table public.shares enable row level security;
+
+create policy "shares_insert" on public.shares
+  for insert to authenticated
+  with check (num_nonnulls (annonce_id, event_id) = 1);
+
+alter table public.clicks enable row level security;
+
+create policy "clicks_insert" on public.clicks
+  for insert to authenticated
+  with check (num_nonnulls (annonce_id, event_id) = 1);
+
+alter table public.signalements enable row level security;
+
+create policy "signalements_insert" on public.signalements
+  for insert to authenticated
+  with check (motif is not null);
+
+create policy "signalements_select_own" on public.signalements
+  for select to authenticated
+  using (user_id = auth.uid());
+
+create policy "signalements_update_admin" on public.signalements
+  for update to authenticated
+  using (public.cultura_is_admin())
+  with check (public.cultura_is_admin());
+
+create policy "signalements_delete_admin" on public.signalements
+  for delete to authenticated
+  using (public.cultura_is_admin());

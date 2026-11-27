@@ -221,3 +221,46 @@ create table public.vues_quotidiennes (
   total integer not null,
   check (num_nonnulls (annonce_id, event_id) = 1)
 );
+
+-- ============================================================================
+-- Index recommandés (cahier §10.2) et invariants (cahier §10.1)
+-- ============================================================================
+
+create unique index if not exists idx_likes_annonce_user
+  on public.likes (user_id, annonce_id) where annonce_id is not null;
+create unique index if not exists idx_likes_event_user
+  on public.likes (user_id, event_id) where event_id is not null;
+create unique index if not exists idx_favorites_annonce_user
+  on public.favorites (user_id, annonce_id) where annonce_id is not null;
+create unique index if not exists idx_favorites_event_user
+  on public.favorites (user_id, event_id) where event_id is not null;
+create unique index if not exists idx_shares_annonce_user
+  on public.shares (user_id, annonce_id) where annonce_id is not null;
+create unique index if not exists idx_shares_event_user
+  on public.shares (user_id, event_id) where event_id is not null;
+create unique index if not exists idx_clicks_annonce_user
+  on public.clicks (user_id, annonce_id) where annonce_id is not null;
+create unique index if not exists idx_clicks_event_user
+  on public.clicks (user_id, event_id) where event_id is not null;
+create unique index if not exists idx_signalements_annonce_user
+  on public.signalements (user_id, annonce_id) where annonce_id is not null;
+create unique index if not exists idx_signalements_event_user
+  on public.signalements (user_id, event_id) where event_id is not null;
+
+create index if not exists idx_annonces_created on public.annonces (created_at desc);
+create index if not exists idx_annonces_statut on public.annonces (statut);
+create index if not exists idx_annonces_categorie on public.annonces (categorie_id);
+create index if not exists idx_events_date on public.events (date_event);
+create index if not exists idx_events_ville on public.events (ville);
+create index if not exists idx_events_commune on public.events (commune);
+create index if not exists idx_events_statut on public.events (statut);
+create index if not exists idx_events_acteur on public.events (acteur_id);
+create index if not exists idx_acteurs_user on public.acteurs_culturels (user_id);
+create index if not exists idx_views_annonce on public.views (annonce_id);
+create index if not exists idx_views_event on public.views (event_id);
+
+alter table public.annonces
+  add constraint chk_annonces_origine_source_url check (origine <> 'equipe' or source_url is not null);
+
+alter table public.events
+  add constraint chk_events_origine_source_url check (origine <> 'equipe' or source_url is not null);
