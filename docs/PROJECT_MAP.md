@@ -14,9 +14,9 @@
 ├── AGENTS.md, CLAUDE.md        Règles de travail (source de vérité procédurale)
 ├── PROGRESS.md                  Journal d'état, verdicts, preuves
 ├── DESIGN.md                    Design system (v0.2 validé)
-├── DECISIONS/                   ADR-001…004
+├── DECISIONS/                   ADR-001…005
 ├── BACKLOG.md, QUESTIONS.md    Hors périmètre / arbitrages ouverts
-├── i18n/GLOSSAIRE.md            Vocabiliser PT/FR/EN
+├── i18n/GLOSSAIRE.md            Glossaire PT/FR/EN
 ├── CULTURA_*.md, CULTURA_MEDIA_GUIDE_v1.0.docx
 ├── docs/
 │   ├── PROJECT_MAP.md           Ce fichier (cartographie)

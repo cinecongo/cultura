@@ -163,6 +163,35 @@ Préparation détaillée : `docs/OUTILS-CONNEXION.md`.
 - Le mot de passe de la base est stocké dans `%USERPROFILE%\.cultura\` : **à déplacer dans un gestionnaire de mots de passe**.
 - `staging` et `prod` **non créés** (volontairement, ADR-003 / guide §8.6).
 
+### Changement de projet Supabase (2026-11-27)
+
+> Le projet `cultura-dev` du 2026-11-23 (`rfjoxvlgejcvknowvztj`, org `hhwqgrjtriyimllqwhrp`) est **abandonné** : le propriétaire a fourni un nouveau projet, désormais cible unique.
+
+| Élément | Valeur |
+|---|---|
+| Projet | `exsemqskhkgfsogdtvpz` |
+| URL | `https://exsemqskhkgfsogdtvpz.supabase.co` |
+| Clés | format 2025 : clé **publishable** (`sb_publishable_…`) pour `NEXT_PUBLIC_SUPABASE_ANON_KEY`, clé **secrète** (`sb_secret_…`) pour `SUPABASE_SERVICE_ROLE_KEY` |
+| `.env.local` | 4 variables Supabase renseignées (noms vérifiés, valeurs jamais affichées) |
+| Liaison CLI | **non refaite** : `supabase link --project-ref exsemqskhkgfsogdtvpz` échoue tant que `SUPABASE_ACCESS_TOKEN` est absent de `.env.local` (`LinkProjectStatusError`). `supabase/.temp/` (métadonnées de l'ancien projet) a été **supprimé** pour qu'aucune commande ne cible l'ancien projet par erreur. |
+| Secret JWT legacy | **non enregistré** dans le dépôt ni dans `.env.local` ; inutile pour l'application |
+
+**Sécurité — action humaine requise :** les clés de ce projet ont transité par un message de chat le 2026-11-27. Le secret `sb_secret_…` et le secret JWT legacy sont donc **considérés comme exposés**. À faire avant toute mise en production : rotation dans le tableau de bord Supabase, puis mise à jour de `.env.local` et des secrets d'hébergement. Suivi en `QUESTIONS.md` (O12).
+
+**Workflow P2 modifié** — Docker abandonné au profit du travail en ligne : voir `DECISIONS/ADR-005-migrations-en-ligne.md`.
+
+**Preuves de connexion (2026-11-27, sorties réelles) :**
+
+| Contrôle | Résultat |
+|---|---|
+| Clé publishable → `GET /auth/v1/health` | **HTTP 200** |
+| Clé publishable → `GET /rest/v1/table_inexistante` | **HTTP 404 `PGRST205`** (clé acceptée, aucune table créée) |
+| Clé publishable + `Authorization: Bearer` | **HTTP 404 `PGRST205`** (compatible `supabase-js`) |
+| Clé secrète → `GET /rest/v1/` | **HTTP 200**, 2 186 o |
+| Valeurs de clés dans les fichiers suivis (102) | **0** (motifs `sb_secret_…`, `sb_publishable_…`, `eyJhbGciOi…`) |
+| `npm run secrets` | `no leaks found`, 10 commits |
+| `npm run typecheck` / `npm run lint` / `npm run format:check` | 0 erreur / 0 erreur / conforme |
+
 ### Vercel — non fait
 
 Bloqué par l'absence de compte/équipe (O4) et de domaine (O5). Aucun déploiement possible pour l'instant.
@@ -571,6 +600,7 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 | ADR-002 | i18n catalogues typés + `Intl` | **Accepté** | 2026-11-23 |
 | ADR-003 | RLS, rôles, journal immuable | **Accepté** (revue `security-reviewer` à faire en P2) | 2026-11-23 |
 | ADR-004 | Données, mutations, pagination, score | **Accepté** (revue `db-security` à faire en P2) | 2026-11-23 |
+| ADR-005 | Migrations Supabase en ligne, sans Docker | **Accepté** | 2026-11-27 |
 | DESIGN.md | Identité et composants | **Validé** (v0.2) | 2026-11-23 |
 
 ---
@@ -629,7 +659,8 @@ Réserves :
 | Ambiguïté `events` vs `annonces.format='evenement'` | Élevé | Q6 tranché ; correction T2 en P2.1 |
 | Doublons de likes sur événements (NULL) | Moyen | Correction T1 en P2.1 |
 | Absence de locuteur PT-AO | Moyen | Q7 ; ne pas figer les textes définitifs |
-| Projet Supabase unique (pas de staging) | Moyen | Ne jamais tester une migration destructive sur `cultura-dev` sans sauvegarde |
+| Projet Supabase unique, migrations appliquées en ligne (pas de bac à sable local) | Élevé | ADR-005 : `db push --dry-run` + `db dump` archivé + revue SQL avant chaque application ; opérations destructives soumises à validation humaine écrite |
+| Clés Supabase exposées dans un message de chat (2026-11-27) | Élevé | Rotation avant P10 (O12) ; `.env.local` non versionné ; `npm run secrets` à chaque étape |
 | `cultura-dev` étiqueté « production » par la CLI | Moyen | Toujours vérifier le `project-ref` avant `db push` |
 | Secrets locaux en clair (`~/.cultura/`) | Moyen | Déplacer vers un gestionnaire de mots de passe |
 | Quotas Supabase/Vercel | Faible | ADR-004 : agrégats, purge, budgets |
@@ -639,10 +670,10 @@ Réserves :
 ## Prochaine action
 
 1. **Verdict indépendant de P1.5** — obtenu le 2026-11-26 : **VALIDÉ** (B1/B2 corrigés et prouvés par mesures ; N37–N39 traités). P1.2 est `DONE` depuis le verdict du 2026-11-25, confirmé le 2026-11-26.
-2. **P2** : schéma Supabase en **local d'abord** (Docker), migrations et tests RLS ; **rien n'est poussé sur `cultura-dev` avant validation explicite du schéma**. Revue `db-security` / `security-reviewer`.
+2. **P2** : schéma Supabase **en ligne uniquement** (ADR-005, aucun Docker) sur `cultura-dev` `exsemqskhkgfsogdtvpz`. Séquence : migrations SQL versionnées → `db push --dry-run` → dump de sauvegarde → revue `db-security` / `security-reviewer` → **validation humaine explicite** → `db push` → tests RLS sur la base distante. Prérequis humain : `SUPABASE_ACCESS_TOKEN` et `SUPABASE_DB_PASSWORD` dans `.env.local`, puis `supabase link` sur le nouveau `project-ref`.
 3. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12).
 4. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
 
 ---
 
-*Dernière mise à jour : 2026-11-26.*
+*Dernière mise à jour : 2026-11-27.*

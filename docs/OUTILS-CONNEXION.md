@@ -13,7 +13,7 @@
 | npm | 11.19.1 | dépendances |
 | Git | 2.55.0 | dépôt |
 | Supabase CLI | 3.1.0 (3.3.0 disponible) | migrations, types, advisors |
-| Docker | 29.9.3 | base Supabase locale |
+| Docker | 29.9.3 (démon inactif) | **non utilisé** — migrations en ligne (ADR-005) |
 | Java (Temurin) | 17.0.20.1 | build Android (P9) |
 | Edge headless | présent | rendu PNG des SVG, captures |
 | GitHub CLI (`gh`) | **absent** | création du dépôt, secrets |
@@ -80,40 +80,63 @@ git log --oneline -1
 
 ---
 
-## 4. Supabase — **dev fait le 2026-11-23**
+## 4. Supabase — **nouveau projet depuis le 2026-11-27**
+
+> L'ancien projet `cultura-dev` (`rfjoxvlgejcvknowvztj`, org `hhwqgrjtriyimllqwhrp`) est **abandonné**. Toute la suite se fait sur le projet ci-dessous.
 
 | Élément | Valeur |
 |---|---|
-| Organisation | `Cultura` — `hhwqgrjtriyimllqwhrp` (plan gratuit) |
-| Projet dev | `cultura-dev` — `rfjoxvlgejcvknowvztj` |
-| Région | `eu-west-1` |
-| État | `ACTIVE_HEALTHY` |
-| Liaison | `supabase link` → OK |
+| Projet | `cultura-dev` — `exsemqskhkgfsogdtvpz` |
+| URL | `https://exsemqskhkgfsogdtvpz.supabase.co` |
+| Clés | clé **publishable** (`sb_publishable_…`) → `NEXT_PUBLIC_SUPABASE_ANON_KEY` ; clé **secrète** (`sb_secret_…`) → `SUPABASE_SERVICE_ROLE_KEY` |
+| Région | à confirmer (l'ancien projet était en `eu-west-1`) |
+| Liaison CLI | **à refaire** : nécessite `SUPABASE_ACCESS_TOKEN` dans `.env.local` |
+| `.env.local` | 4 variables renseignées ; valeurs jamais affichées, fichier ignoré par Git |
+
+### 4.1 Refus de Docker — migrations en ligne (ADR-005)
+
+Docker n'est **pas** utilisé : pas de `supabase start`, pas de `db reset`, pas de base locale. Les migrations s'écrivent dans `supabase/migrations/` puis s'appliquent au projet distant avec des garde-fous :
 
 ```bash
-# déjà exécuté
-supabase orgs create "Cultura" --yes
-supabase projects create cultura-dev --org-id hhwqgrjtriyimllqwhrp --db-password <secret> --region eu-west-1 --yes
-supabase link --project-ref rfjoxvlgejcvknowvztj --yes
-```
+# 1. vérifier la cible
+Get-Content supabase/.temp/project-ref          # doit afficher exsemqskhkgfsogdtvpz
 
-**Pièges rencontrés :**
+# 2. aperçu, sans rien appliquer
+supabase db push --dry-run
 
-- `--size micro` est **refusé** sur le plan gratuit (`entitlement_required`). Ne pas le passer.
-- La CLI étiquette le projet comme `environment: production` dans la réponse de `link` : c'est un **libellé**, pas la nature du projet. Toujours vérifier le `project-ref` avant un `db push`.
-- Le mot de passe de la base est dans `%USERPROFILE%\.cultura\` : **à déplacer dans un gestionnaire de mots de passe**.
+# 3. sauvegarde avant application (archiver hors du dépôt)
+supabase db dump -f .backups/avant-push.sql
 
-**Reste à faire :**
+# 4. application, après revue SQL et validation humaine
+supabase db push
 
-1. Créer `cultura-staging` et `cultura-prod` — **plus tard**, avant P10.
-2. Activer la protection contre les fuites de mot de passe, la confirmation d'email, les limites d'inscription.
-3. Générer les types après chaque migration :
-
-```bash
+# 5. types TypeScript
 supabase gen types typescript --linked > src/lib/supabase/types.ts
 ```
 
-4. Ne jamais copier `service_role` dans le client, Vercel `NEXT_PUBLIC_*` ou l'APK.
+Détail et justifications : `DECISIONS/ADR-005-migrations-en-ligne.md`.
+
+### 4.2 Liaison du nouveau projet
+
+```bash
+# prérequis : SUPABASE_ACCESS_TOKEN et SUPABASE_DB_PASSWORD dans .env.local
+supabase link --project-ref exsemqskhkgfsogdtvpz
+```
+
+Sans `SUPABASE_ACCESS_TOKEN`, la CLI répond `LinkProjectStatusError: Your account does not have the necessary privileges…` : ce n'est pas un problème de droits, c'est l'absence de jeton.
+
+**Pièges connus :**
+
+- `--size micro` est **refusé** sur le plan gratuit (`entitlement_required`).
+- La CLI peut étiqueter le projet `environment: production` : c'est un **libellé**, pas la nature du projet. Toujours vérifier le `project-ref` avant un `db push`.
+- Ne jamais copier la clé secrète dans le client, Vercel `NEXT_PUBLIC_*` ou l'APK.
+
+**Reste à faire :**
+
+1. Ajouter `SUPABASE_ACCESS_TOKEN` et `SUPABASE_DB_PASSWORD` dans `.env.local` (jamais dans le chat).
+2. Relancer `supabase link` sur le nouveau `project-ref`.
+3. **Rotation des clés** exposées dans un message le 2026-11-27 (secret `sb_secret_…` + secret JWT legacy) — voir `QUESTIONS.md` O12.
+4. Créer `cultura-staging` et `cultura-prod` — **plus tard**, avant P10.
 
 ---
 
@@ -166,7 +189,8 @@ Les clés, elles, sont saisies **par vous** dans `.env.local` et dans les interf
 
 - [ ] `git remote -v` pointe vers le bon dépôt.
 - [ ] `main` protégée ; première PR possible.
-- [ ] `supabase projects list` affiche le projet `dev`.
+- [ ] `supabase projects list` affiche le projet `dev` (`exsemqskhkgfsogdtvpz`).
+- [ ] `supabase/.temp/project-ref` = `exsemqskhkgfsogdtvpz` (liaison refaite).
 - [ ] `.env.local` rempli localement ; `git status` ne montre aucun `.env`.
 - [ ] `npm run dev` (à venir en P1.5) démarre sans erreur.
 - [ ] Un déploiement d'aperçu Vercel se construit.
@@ -175,4 +199,4 @@ Les clés, elles, sont saisies **par vous** dans `.env.local` et dans les interf
 
 ---
 
-*Préparation datée du 23 novembre 2026. Cette page ne contient aucun secret et ne doit jamais en contenir.*
+*Préparation datée du 23 novembre 2026 ; section Supabase révisée le 27 novembre 2026 (nouveau projet, migrations en ligne). Cette page ne contient aucun secret et ne doit jamais en contenir.*

@@ -45,6 +45,7 @@
 | Tests visuels de régression | 2026-11-23 | Design system | Après P8.5 |
 | Test e2e contre l'export statique (`out/`) | 2026-11-26 | `test:e2e` ne couvre que `next dev` (constat N36) | Après P8.5 |
 | Icône maskable 512 px + image de partage OG 1200 × 630 | 2026-11-26 | Manquants pour l'APK et les partages (DESIGN.md §15) | Avant 1.0 |
+| Second projet Supabase distant (staging) | 2026-11-27 | Isoler les essais destructifs, Docker étant écarté (ADR-005, option C) | Si le besoin de bac à sable se confirme |
 
 ---
 
