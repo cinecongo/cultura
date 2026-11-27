@@ -19,12 +19,12 @@
 | P1.3 | Squelette App Router + couche `platform` + deux builds | `DONE` | **VALIDÉ par le `verifier` le 2026-11-24** |
 | P1.4 | i18n typé PT-AO/FR/EN + 2 écrans + résolveur | `DONE` | **VALIDÉ par le `verifier` le 2026-11-24** ; corrections N1–N3, N8, N12, N18, N19 appliquées |
 | P1.5 | Design system : tokens, Archivo, en-tête, réglette | `DONE` | **VALIDÉ par le `verifier` indépendant le 2026-11-26** (B1/B2 corrigés et prouvés ; N37–N39 traités) |
-| P2.1 | Schéma et types générés | `VERIFYING` | 3 migrations remote appliquées, dry-run à jour |
-| P2.2 | RLS et protection des rôles | `VERIFYING` | 17/17 tables avec RLS, 0 écriture ouverte |
-| P2.3 | Matrice de tests RLS | `VERIFYING` | 11/11 tests RLS + 3/3 stockage |
-| P2.4 | Seed fictif PT/FR/EN | `VERIFYING` | 5 villes, 6 catégories, données non personnelles |
-| P2.5 | Bucket d'images privé | `VERIFYING` | Upload non-image refusé, WebP accepté (test réel) |
-| **Gate G2** | Clôture P2 | `VERIFYING` | Verdict `verifier` indépendant à obtenir |
+| P2.1 | Schéma et types générés | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; 3 migrations remote appliquées, dry-run à jour, types régénérés (17 tables) |
+| P2.2 | RLS et protection des rôles | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; 17/17 tables avec RLS, 0 écriture ouverte |
+| P2.3 | Matrice de tests RLS | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; 11/11 tests RLS + 3/3 stockage |
+| P2.4 | Seed fictif PT/FR/EN | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; 5 villes, 6 catégories, données non personnelles |
+| P2.5 | Bucket d'images privé | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; upload non-image refusé, WebP accepté (test réel) |
+| **Gate G2** | Clôture P2 | `DONE` | **VALIDÉ par le verifier le 2026-11-27 (second verdict)** |
 | P3 → P10 | — | `TODO` | — |
 
 **Gate G0 : FRANCHIE le 2026-11-23** par validation humaine (« tu as le go »), avec **réserves** :
@@ -597,7 +597,7 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
 
 ## [P2.1] Schéma et types générés
 
-- **Statut :** `VERIFYING` — verdict global attendu à la Gate G2.
+- **Statut :** `DONE` — **VALIDÉ par le verifier le 2026-11-27 (second verdict)** (Gate G2).
 - **Skills/agents appelés :** `db-security`, `engineering:system-design` (substituts : ADR-003/004 acceptés, revue SQL avant application, dry-run CLI). Date : 2026-11-27.
 - **Plan :**
   1. Écrire la migration du modèle amendé (rôles, interactions, tables de revendication/demande).
@@ -611,14 +611,14 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
   - `supabase gen types typescript --linked` → fichier généré (converti UTF-16 → UTF-8), `typecheck` vert.
   - Base distante PostgreSQL **17.12**, **17 tables** dans `public`.
   - **Correction du 2026-11-27 (refus B1) :** le fichier initial (133 lignes) avait été généré avant l'application effective du schéma et ne contenait que `{ [_ in never]: never }`. Régénération depuis la base appliquée → **584 lignes**, avec présence effective de `annonces`, `events`, `users`, `moderation_log`, etc. ; formatage Prettier, `typecheck` et `format:check` verts.
-- **Verdict verifier :** en attente (Gate G2).
+- **Verdict verifier :** **VALIDÉ** le 2026-11-27 (second verdict) — Gate G2.
 - **Dette :** aucune.
 
 ---
 
 ## [P2.2] RLS et protection des rôles
 
-- **Statut :** `VERIFYING` — verdict global attendu à la Gate G2.
+- **Statut :** `DONE` — **VALIDÉ par le verifier le 2026-11-27 (second verdict)** (Gate G2).
 - **Skills/agents appelés :** `db-security` (substitut : revue SQL des policies + contrôles `pg_catalog`, ADR-003). Date : 2026-11-27.
 - **Plan :**
   1. Activer RLS sur toutes les tables du modèle.
@@ -632,14 +632,14 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
   - `moderation_log` : 1 policy `INSERT` (`cultura_is_admin()`), 0 policy `UPDATE`/`DELETE`.
   - `vues_quotidiennes` : RLS activée, 0 policy → denial par défaut (accès réservé au service).
   - **Écart contrôlé :** `get_advisors('security')` n'est **pas disponible** sur ce projet : RPC REST → `404 PGRST202` (fonction absente du schéma cache), aucune fonction `*advisor*` hors `pg_catalog`, endpoints Management API `/advisors` et `/database/lints` → 404. Substitution retenue : les contrôles `pg_catalog` ci-dessus, qui couvrent les deux critères vérifiables (« aucune table sans RLS », « aucune écriture ouverte »).
-- **Verdict verifier :** en attente (Gate G2).
+- **Verdict verifier :** **VALIDÉ** le 2026-11-27 (second verdict) — Gate G2.
 - **Dette :** `get_advisors` à relancer si Supabase réintroduit la fonction ; aucune alerte de sécurité détectée par substitution. Triggers `BEFORE UPDATE` de défense en profondeur prévus par ADR-003 §2/§6 non posés : la contrainte est assurée par RLS et prouvée par tests (réserve R2 du verifier, non bloquante).
 
 ---
 
 ## [P2.3] Matrice de tests RLS
 
-- **Statut :** `VERIFYING` — verdict global attendu à la Gate G2.
+- **Statut :** `DONE` — **VALIDÉ par le verifier le 2026-11-27 (second verdict)** (Gate G2).
 - **Skills/agents appelés :** `qa-tester` (substitut : tests écrits par le constructeur, rejoués par le `verifier`). Date : 2026-11-27.
 - **Plan :**
   1. Établir une session qui **évalue réellement** RLS (`set role authenticated`, le rôle de connexion ayant `rolbypassrls = true`).
@@ -653,14 +653,14 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
   - Opérations couvertes : lecture, création annonce/événement, modification, suppression, rôle `users.role`, likes, `moderation_log`.
   - Cas d'accès interdit qui **doivent** échouer : création par membre, création d'événement par acteur B, modification par acteur B, changement de rôle par éditeur, like au nom d'autrui, insertion dans `moderation_log` par membre — tous rejetés.
   - Correction apportée : le harness supprimait auparavant toutes les fiches/annonces/événements ; le nettoyage est désormais ciblé et le seed survit à la suite (vérifié : 5 fiches, 6 annonces, 5 événements après exécution).
-- **Verdict verifier :** en attente (Gate G2).
+- **Verdict verifier :** **VALIDÉ** le 2026-11-27 (second verdict) — Gate G2.
 - **Dette :** la matrice est couverte par des tests SQL réels, pas par des appels HTTP authentifiés (P3 ajoutera les parcours e2e).
 
 ---
 
 ## [P2.4] Données de test fictives
 
-- **Statut :** `VERIFYING` — verdict global attendu à la Gate G2.
+- **Statut :** `DONE` — **VALIDÉ par le verifier le 2026-11-27 (second verdict)** (Gate G2).
 - **Skills/agents appelés :** `i18n-auditor` (substitut : relecture PT/FR/EN interne, Q7 toujours ouvert). Date : 2026-11-27.
 - **Plan :**
   1. Créer un seed fictif idempotent, sans donnée réelle ni personnelle.
@@ -673,14 +673,14 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
   - **`categories = 6`**, **`categories_annonces = 6`**, `acteurs = 5`, `annonces = 6`, `events = 5`.
   - Toutes les insertions utilisent `on conflict (id) do nothing` : réexécution sans doublon.
   - Langues PT/FR/EN réparties sur les fiches, annonces et événements ; noms et domaines explicitement fictifs.
-- **Verdict verifier :** en attente (Gate G2).
+- **Verdict verifier :** **VALIDÉ** le 2026-11-27 (second verdict) — Gate G2.
 - **Dette :** relecture PT-AO (Q7) non faite ; aucune donnée réelle.
 
 ---
 
 ## [P2.5] Stockage d'images
 
-- **Statut :** `VERIFYING` — verdict global attendu à la Gate G2.
+- **Statut :** `DONE` — **VALIDÉ par le verifier le 2026-11-27 (second verdict)** (Gate G2).
 - **Skills/agents appelés :** `security-reviewer` (substitut : test réel d'upload + revue de configuration bucket). Date : 2026-11-27.
 - **Plan :**
   1. Créer le bucket privé `cultura-media` avec limite de taille et liste MIME blanche.
@@ -692,19 +692,19 @@ Rendu vérifié : « C » brossé + flèche terracotta/ocre + `CULTURA` + `AGEND
   - `GET /storage/v1/bucket/cultura-media` → **HTTP 200** : `public: false`, `file_size_limit: 10485760`, `allowed_mime_types: [image/webp, image/png, image/jpeg, image/avif]`, `versioning_status: DISABLED`.
   - `npm run test:rls` → test 1 : configuration conforme ; test 2 : **upload `text/plain` refusé**, **upload WebP accepté**, objet supprimé ensuite ; test 3 : **upload anonyme refusé**.
   - Aucune policy `storage.objects` : bucket inaccessible aux utilisateurs finaux jusqu'au chemin serveur sécurisé de P4.5 (déni par défaut, choix documenté dans la migration).
-- **Verdict verifier :** en attente (Gate G2).
+- **Verdict verifier :** **VALIDÉ** le 2026-11-27 (second verdict) — Gate G2.
 - **Dette :** upload depuis l'application (redimensionnement WebP, nom généré) en P4.5 ; aucune image servie publiquement pour l'instant.
 
 ---
 
 ## Gate G2 — clôture de P2
 
-- **Statut :** `VERIFYING` — verdict indépendant du `verifier` en cours.
+- **Statut :** `DONE` — **VALIDÉ par le verifier le 2026-11-27 (second verdict)**.
 - **Critères du guide §9 (P2) :**
 
 | Critère | État | Preuve |
 |---|---|---|
-| P2.1 migrations appliquées sur projet vierge + types générés | Satisfait après correction B1 | `migration list` 3/3, dry-run à jour, types régénérés en 584 lignes depuis la base appliquée |
+| P2.1 migrations appliquées sur projet vierge + types générés | Satisfait après correction B1 | `migration list` 3/3, dry-run à jour, types régénérés depuis la base appliquée (17 tables ; 948 lignes après Prettier) |
 | P2.2 0 alerte sécurité, aucune table sans RLS | Satisfait par substitution | 17/17 RLS, `TABLES_SANS_RLS = []`, `ECRITURES_OUVERTES = []` ; `get_advisors` indisponible (documenté) |
 | P2.3 matrice rôles × CRUD, cas interdits verts | Satisfait | 14/14 tests distants |
 | P2.4 seed 5 villes + toutes catégories, aucune donnée réelle | Satisfait | comptages SQL ci-dessus |
@@ -753,7 +753,44 @@ Prochaine étape autorisée : aucune. Retour en implémentation sur P2.1 uniquem
 | R2 (réserve) | Triggers de défense en profondeur absents (`users.role`, `moderation_log`) | Non bloquant : RLS prouvée par tests ; dette à arbitrer en P3/P5, pas de modification du schéma P2. |
 | R3 (réserve) | Verdicts P0.1–P0.4 / P1.1 encore en attente | Dette ancienne, non aggravée ; aucun saut d'étape. |
 
-- **Prochaine étape autorisée :** aucune tant que le second verdict du `verifier` n'est pas inscrit ; P3 (authentification et rôles) reste fermée.
+### Second verdict indépendant du 2026-11-27 (`verifier`)
+
+```text
+Étape : P2.1 → P2.5 — Gate G2 (second verdict, après refus B1)
+Verdict : VALIDÉ
+
+Commandes relancées (depuis C:\Users\KAYEMBE\Documents\CULTURA) :
+- npm run lint → exit 0, 0 erreur, 0 avertissement
+- npm run typecheck → exit 0, 0 erreur
+- npm run test → 97/97 tests passés (8 fichiers)
+- npm run test:rls → 14/14 tests passés (2 fichiers : 11 RLS + 3 stockage, 24,85 s)
+- npm run test:e2e → 17/17 tests passés (Edge, 38,8 s)
+- npm run build:web → exit 0, 11 pages générées
+- npm run build:mobile → exit 0, export statique dans out/ ; lancé APRÈS build:web, jamais en parallèle (.next partagé)
+- npm run secrets → no leaks found (35 commits, ~1,29 Mo scannés)
+- npm run audit → found 0 vulnerabilities
+- npm run format:check → conforme
+- supabase migration list --remote → 3 entrées locales = 3 entrées distantes (20261127120000, …0001, …0002), projet exsemqskhkgfsogdtvpz
+- supabase db push --dry-run --remote → upToDate: true, migrations: [], « Remote database is up to date. »
+- Contrôle ciblé B1 → `src/lib/supabase/types.ts` décrit exactement 17 tables (acteurs_culturels, annonces, categories, clicks, demandes_retrait, events, events_acteurs, favorites, likes, moderation_log, revendications_fiches, shares, signalements, users, views, villes_suivies, vues_quotidiennes) et 3 fonctions RLS ; `Tables` n'est plus vide. Le fichier versionné (948 lignes après Prettier ; les « 584 lignes » du journal correspondent à la sortie brute non formatée de la CLI) est identique au contenu de `supabase gen types typescript --linked` relancé puis formaté par Prettier (fins de ligne normalisées). `typecheck` passe donc avec des types réels, non avec un fichier vide. Les vides résiduels `Views`/`Enums`/`CompositeTypes` sont exacts : le schéma P2 ne définit aucune vue, énumération ou type composite (les vues de l'ADR-004 sont prévues plus tard).
+- Contrôle pg_catalog relancé en lecture seule via pooler → 17/17 tables avec `rowsecurity = true`, 0 écriture ouverte, 0 policy UPDATE/DELETE sur `moderation_log` ; seed intact après `test:rls` : 5 villes distinctes, 6 catégories, 5 fiches, 6 annonces, 5 événements.
+- Aucune valeur secrète n'a été affichée ni écrite : jeton CLI et mot de passe base injectés uniquement par affectations PowerShell depuis `.env.local`.
+
+Critères d'acceptation : 5/5
+
+Motifs de refus / réserves :
+- B1 du premier verdict : LEVÉ. La régénération est vérifiée par comparaison directe avec la génération distante actuelle ; la preuve n'est plus une affirmation.
+- R1 — réserve maintenue, non bloquante : `get_advisors` toujours indisponible ; substitution par contrôles `pg_catalog` jugée acceptable, risque résiduel sur les alertes spécifiques aux advisors.
+- R2 — réserve maintenue, non bloquante : triggers de défense en profondeur de l'ADR-003 absents ; la RLS et les tests prouvent l'effet attendu, dette à arbitrer en P3/P5.
+- R3 — réserve maintenue, non bloquante : verdicts P0.1–P0.4 / P1.1 toujours en attente (dette ancienne). Aucun saut d'étape, aucun code P3+ ajouté (le diff `4b9d6f5..HEAD` ne touche que `src/lib/supabase/types.ts` et `PROGRESS.md`), aucun test modifié ou affaibli depuis le premier verdict, aucun texte d'interface ajouté en dur.
+- Aucun bloquant restant.
+
+Statut inscrit dans PROGRESS.md : DONE — P2.1 à P2.5 et Gate G2 passés à `DONE`.
+
+Prochaine étape autorisée : P3 (authentification et rôles), conformément au guide §1.2.
+```
+
+- **Prochaine étape autorisée :** P3 (authentification et rôles), conformément au second verdict indépendant inscrit ci-dessus.
 
 ---
 
@@ -855,7 +892,7 @@ Réserves :
 ## Prochaine action
 
 1. **Verdict indépendant de P1.5** — obtenu le 2026-11-26 : **VALIDÉ** (B1/B2 corrigés et prouvés par mesures ; N37–N39 traités). P1.2 est `DONE` depuis le verdict du 2026-11-25, confirmé le 2026-11-26.
-2. **P2** : cinq étapes livrées et documentées individuellement ci-dessus (schéma, RLS, matrice de tests, seed, stockage). **Gate G2 en `VERIFYING`** : le verdict indépendant du `verifier` doit être inscrit dans la section « Gate G2 » avant d'ouvrir P3. Tout est appliqué en ligne, sans Docker ; migrations remote 3/3, dry-run à jour, 14/14 tests distants, seed intact.
+2. **P2** : cinq étapes livrées et documentées individuellement ci-dessus (schéma, RLS, matrice de tests, seed, stockage). **Gate G2 `DONE` — VALIDÉ par le verifier le 2026-11-27 (second verdict)** ; P3 est ouverte. Tout est appliqué en ligne, sans Docker ; migrations remote 3/3, dry-run à jour, 14/14 tests distants, seed intact.
 3. Côté humain : clé SSH Windows, protection de `main`, comptes Vercel/domaine/email (O4–O8), relecteur PT-AO (Q7), master logo nettoyé, validation juridique (M12).
 4. Décisions à prendre : N11 (URL web/mobile, P8), N20 (date du jour sur l'export mobile, P3).
 
